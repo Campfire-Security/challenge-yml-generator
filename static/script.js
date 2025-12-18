@@ -1,6 +1,10 @@
 let instanceCounter = 0;
 let flagCounter = 0;
+let answerCounter = 0;
 let previewYamlData = null;
+
+// Predefined answer keys for multiple choice
+const answerKeys = ['answer-1', 'answer-2', 'answer-3', 'answer-4', 'answer-5'];
 
 // Helper function to create label with info icon
 function createLabelWithInfo(labelText, helpText) {
@@ -588,9 +592,40 @@ function addFlag() {
             <input type="text" class="flag-name" placeholder="Challenge name" required>
         </div>
         <div class="form-group">
-            ${createLabelWithInfo('Static Flag Value *', 'Must be FIRE{...} or DDC{...} format with 6-50 characters inside braces. Allowed characters: letters (a-z, A-Z), numbers (0-9), hyphens (-), underscores (_).\n\nExample flags:\n\n• FIRE{flag_here_in_1337speak}\n• DDC{h4nds_up_7h1s_15_4_r0pp3ry}\n• FIRE{771b2f7a-d8f2-48f9-856e-70a83c9dd65c}')}
-            <input type="text" class="flag-static" placeholder="FIRE{flag_here_in_1337speak}" required pattern="^(FIRE|DDC)\{[a-zA-Z0-9\-_]{6,50}\}$">
+            ${createLabelWithInfo('Flag Type *', 'Choose between a static flag value or multiple choice quiz')}
+            <select class="flag-type" required onchange="toggleFlagType(${safeFlagCounter})">
+                <option value="static" selected>Static Flag</option>
+                <option value="multipleChoice">Multiple Choice</option>
+            </select>
         </div>
+        
+        <!-- Static Flag Fields -->
+        <div class="static-flag-fields" id="static-flag-${safeFlagCounter}">
+            <div class="form-group">
+                ${createLabelWithInfo('Static Flag Value *', 'Must be FIRE{...} or DDC{...} format with 6-50 characters inside braces. Allowed characters: letters (a-z, A-Z), numbers (0-9), hyphens (-), underscores (_).\\n\\nExample flags:\\n\\n• FIRE{flag_here_in_1337speak}\\n• DDC{h4nds_up_7h1s_15_4_r0pp3ry}\\n• FIRE{771b2f7a-d8f2-48f9-856e-70a83c9dd65c}')}
+                <input type="text" class="flag-static" placeholder="FIRE{flag_here_in_1337speak}" pattern="^(FIRE|DDC)\\{[a-zA-Z0-9\\-_]{6,50}\\}$">
+            </div>
+        </div>
+        
+        <!-- Multiple Choice Fields -->
+        <div class="multiple-choice-fields" id="mc-flag-${safeFlagCounter}" style="display: none; flex-basis: 100%;">
+            <div class="form-group" style="flex-basis: 100%;">
+                ${createLabelWithInfo('Wrong Answers Feedback *', 'Message shown when an incorrect answer is selected')}
+                <textarea class="mc-wrong-feedback" rows="2">That's not correct. Try again!</textarea>
+            </div>
+            <div class="form-group" style="flex-basis: 100%;">
+                ${createLabelWithInfo('Correct Answers Feedback *', 'Message shown when the correct answer is selected')}
+                <textarea class="mc-correct-feedback" rows="2">Correct! Well done!</textarea>
+            </div>
+            <div style="flex-basis: 100%;">
+                <h4 style="color: #ff6b35; margin: 10px 0;">Answers (2-5 required)</h4>
+                <div class="mc-answers" id="mc-answers-${safeFlagCounter}">
+                    <!-- Answers will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addAnswerToFlag(${safeFlagCounter})" style="margin-top: 10px;">+ Add Answer</button>
+            </div>
+        </div>
+        
         <div class="form-group">
             ${createLabelWithInfo('Points *', 'Points awarded for capturing this flag')}
             <input type="number" class="flag-points" value="20" placeholder="20" min="0" required>
@@ -631,6 +666,115 @@ function removeFlag(flagId) {
         flag.remove();
     }
 }
+
+function toggleFlagType(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const flagEntry = document.getElementById(`flag-${sanitizedId}`);
+    if (!flagEntry) return;
+    
+    const flagTypeSelect = flagEntry.querySelector('.flag-type');
+    const staticFields = flagEntry.querySelector(`#static-flag-${sanitizedId}`);
+    const mcFields = flagEntry.querySelector(`#mc-flag-${sanitizedId}`);
+    const staticInput = flagEntry.querySelector('.flag-static');
+    const mcWrongFeedback = flagEntry.querySelector('.mc-wrong-feedback');
+    const mcCorrectFeedback = flagEntry.querySelector('.mc-correct-feedback');
+    
+    if (flagTypeSelect.value === 'multipleChoice') {
+        // Show multiple choice, hide static
+        staticFields.style.display = 'none';
+        mcFields.style.display = 'flex';
+        if (staticInput) staticInput.removeAttribute('required');
+        if (mcWrongFeedback) mcWrongFeedback.setAttribute('required', 'required');
+        if (mcCorrectFeedback) mcCorrectFeedback.setAttribute('required', 'required');
+        
+        // Initialize with 2 answers if none exist
+        const answersContainer = flagEntry.querySelector(`#mc-answers-${sanitizedId}`);
+        if (answersContainer && answersContainer.children.length === 0) {
+            addAnswerToFlag(sanitizedId);
+            addAnswerToFlag(sanitizedId);
+        }
+    } else {
+        // Show static, hide multiple choice
+        staticFields.style.display = 'block';
+        mcFields.style.display = 'none';
+        if (staticInput) staticInput.setAttribute('required', 'required');
+        if (mcWrongFeedback) mcWrongFeedback.removeAttribute('required');
+        if (mcCorrectFeedback) mcCorrectFeedback.removeAttribute('required');
+    }
+}
+
+function addAnswerToFlag(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const answersContainer = document.getElementById(`mc-answers-${sanitizedId}`);
+    if (!answersContainer) return;
+    
+    // Check if we already have 5 answers
+    const existingAnswers = answersContainer.querySelectorAll('.mc-answer-entry');
+    if (existingAnswers.length >= 5) {
+        showAlert('Maximum of 5 answer options allowed for multiple choice flags', 'Maximum Reached');
+        return;
+    }
+    
+    // Auto-assign the next answer key based on count
+    const nextKeyIndex = existingAnswers.length + 1;
+    const answerKey = `answer-${nextKeyIndex}`;
+    
+    answerCounter++;
+    const answerDiv = document.createElement('div');
+    answerDiv.className = 'mc-answer-entry';
+    answerDiv.id = `answer-${answerCounter}`;
+    answerDiv.setAttribute('data-flag-id', sanitizedId);
+    answerDiv.setAttribute('data-answer-key', answerKey);
+    
+    const safeAnswerCounter = escapeHtml(String(answerCounter));
+    const safeAnswerKey = escapeHtml(answerKey);
+    
+    answerDiv.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+            <div style="flex: 1; min-width: 200px;">
+                ${createLabelWithInfo('Answer Text *', 'The text displayed for this answer choice')}
+                <input type="text" class="answer-text" placeholder="Enter answer text" required>
+            </div>
+            <div style="flex: 0 0 auto;">
+                <label style="display: flex; align-items: center; cursor: pointer; color: #e2e8f0; margin-top: 20px;">
+                    <input type="checkbox" class="answer-correct" style="margin-right: 8px;">
+                    Correct
+                </label>
+            </div>
+            <button type="button" class="btn remove-btn" onclick="removeAnswerFromFlag(${safeAnswerCounter}, ${sanitizedId})" style="margin-top: 20px;">Remove</button>
+        </div>
+    `;
+    
+    answersContainer.appendChild(answerDiv);
+}
+
+function removeAnswerFromFlag(answerId, flagId) {
+    const sanitizedAnswerId = String(answerId).replace(/[^0-9]/g, '');
+    const sanitizedFlagId = String(flagId).replace(/[^0-9]/g, '');
+    if (!sanitizedAnswerId) return;
+    
+    const answersContainer = document.getElementById(`mc-answers-${sanitizedFlagId}`);
+    if (!answersContainer) return;
+    
+    const existingAnswers = answersContainer.querySelectorAll('.mc-answer-entry');
+    if (existingAnswers.length <= 2) {
+        showAlert('Multiple choice flags must have at least 2 answer options', 'Cannot Remove');
+        return;
+    }
+    
+    const answer = document.getElementById(`answer-${sanitizedAnswerId}`);
+    if (answer) {
+        answer.remove();
+        // Reindex remaining answers
+        const remainingAnswers = answersContainer.querySelectorAll('.mc-answer-entry');
+        remainingAnswers.forEach((answerEntry, index) => {
+            const newKey = `answer-${index + 1}`;
+            answerEntry.setAttribute('data-answer-key', newKey);
+        });
+    }
+}
+
+
 
 function collectFormData() {
     // Sanitize all inputs when collecting form data
@@ -678,20 +822,51 @@ function collectFormData() {
         formData.instances.push(instance);
     });
 
-    // Collect flags from the separate flags container
+    // Collect flags from the flags container
     formData.flags = [];
     const flagEntries = document.querySelectorAll('#flagsContainer .flag-entry');
     flagEntries.forEach(flagEntry => {
         const tag = sanitizeForYaml(flagEntry.querySelector('.flag-tag').value.trim());
         if (tag) {
-            formData.flags.push({
+            const flagType = flagEntry.querySelector('.flag-type').value;
+            const flag = {
                 tag: tag,
                 name: sanitizeForYaml(flagEntry.querySelector('.flag-name').value),
-                static: sanitizeForYaml(flagEntry.querySelector('.flag-static').value),
                 points: parseInt(flagEntry.querySelector('.flag-points').value) || 20,
                 category: sanitizeForYaml(flagEntry.querySelector('.flag-category').value),
                 td: sanitizeForYaml(flagEntry.querySelector('.flag-td').value)
-            });
+            };
+            
+            if (flagType === 'multipleChoice') {
+                // Collect multiple choice data for this flag
+                flag.multipleChoice = {
+                    wrongAnswersFeedback: sanitizeForYaml(flagEntry.querySelector('.mc-wrong-feedback').value),
+                    correctAnswersFeedback: sanitizeForYaml(flagEntry.querySelector('.mc-correct-feedback').value),
+                    answers: {}
+                };
+                
+                const answersContainer = flagEntry.querySelector('.mc-answers');
+                if (answersContainer) {
+                    const answerEntries = answersContainer.querySelectorAll('.mc-answer-entry');
+                    answerEntries.forEach((answerEntry, index) => {
+                        const key = `answer-${index + 1}`;
+                        const text = sanitizeForYaml(answerEntry.querySelector('.answer-text').value.trim());
+                        const correct = answerEntry.querySelector('.answer-correct').checked;
+                        
+                        if (text) {
+                            flag.multipleChoice.answers[key] = {
+                                answerText: text,
+                                correct: correct
+                            };
+                        }
+                    });
+                }
+            } else {
+                // Static flag
+                flag.static = sanitizeForYaml(flagEntry.querySelector('.flag-static').value);
+            }
+            
+            formData.flags.push(flag);
         }
     });
 
@@ -763,16 +938,37 @@ function generateYamlFromData(formData) {
             challenge.instance.push(instance);
         });
 
-        // Add flags to the last service (or create a new service entry if no services exist)
+        // Add flags to the last service
         if (formData.flags && formData.flags.length > 0) {
-            const flags = formData.flags.map(flagData => ({
-                tag: sanitizeForYaml(flagData.tag.trim()),
-                name: sanitizeForYaml(flagData.name),
-                static: sanitizeForYaml(flagData.static),
-                points: parseInt(flagData.points) || 20,
-                category: sanitizeForYaml(flagData.category),
-                td: sanitizeForYaml(flagData.td)
-            }));
+            const flags = formData.flags.map(flagData => {
+                const flag = {
+                    tag: sanitizeForYaml(flagData.tag.trim()),
+                    name: sanitizeForYaml(flagData.name),
+                    points: parseInt(flagData.points) || 20,
+                    category: sanitizeForYaml(flagData.category),
+                    td: sanitizeForYaml(flagData.td)
+                };
+                
+                // Add either static flag or multipleChoice
+                if (flagData.multipleChoice) {
+                    flag.multipleChoice = {
+                        wrongAnswersFeedback: sanitizeForYaml(flagData.multipleChoice.wrongAnswersFeedback),
+                        correctAnswersFeedback: sanitizeForYaml(flagData.multipleChoice.correctAnswersFeedback),
+                        answers: {}
+                    };
+                    
+                    for (const [key, value] of Object.entries(flagData.multipleChoice.answers)) {
+                        flag.multipleChoice.answers[key] = {
+                            answerText: sanitizeForYaml(value.answerText),
+                            correct: value.correct
+                        };
+                    }
+                } else {
+                    flag.static = sanitizeForYaml(flagData.static);
+                }
+                
+                return flag;
+            });
 
             // Add flags to the last service entry
             if (challenge.instance.length > 0) {
@@ -854,10 +1050,41 @@ function previewYaml() {
             showAlert(`Flag ${j + 1} - Tag: ${flagTagValidation.error}`, 'Validation Error');
             return;
         }
-        const flagStaticValidation = validateFlagStatic(flag.static);
-        if (!flagStaticValidation.valid) {
-            showAlert(`Flag ${j + 1} - Flag Value: ${flagStaticValidation.error}`, 'Validation Error');
-            return;
+        
+        // Validate based on flag type
+        if (flag.multipleChoice) {
+            // Validate multiple choice flag
+            if (!flag.multipleChoice.wrongAnswersFeedback || flag.multipleChoice.wrongAnswersFeedback.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
+                return;
+            }
+            if (!flag.multipleChoice.correctAnswersFeedback || flag.multipleChoice.correctAnswersFeedback.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the correct answers feedback`, 'Missing Information');
+                return;
+            }
+            
+            const answerKeys = Object.keys(flag.multipleChoice.answers);
+            if (answerKeys.length < 2) {
+                showAlert(`Flag ${j + 1} - Multiple choice flags require at least 2 answer options`, 'Too Few Answers');
+                return;
+            }
+            if (answerKeys.length > 5) {
+                showAlert(`Flag ${j + 1} - Multiple choice flags can have at most 5 answer options`, 'Too Many Answers');
+                return;
+            }
+            
+            const hasCorrectAnswer = Object.values(flag.multipleChoice.answers).some(answer => answer.correct);
+            if (!hasCorrectAnswer) {
+                showAlert(`Flag ${j + 1} - Please mark at least one answer as correct`, 'No Correct Answer');
+                return;
+            }
+        } else {
+            // Validate static flag
+            const flagStaticValidation = validateFlagStatic(flag.static);
+            if (!flagStaticValidation.valid) {
+                showAlert(`Flag ${j + 1} - Flag Value: ${flagStaticValidation.error}`, 'Validation Error');
+                return;
+            }
         }
     }
 
@@ -943,10 +1170,41 @@ function generateYaml() {
             showAlert(`Flag ${j + 1} - Tag: ${flagTagValidation.error}`, 'Validation Error');
             return;
         }
-        const flagStaticValidation = validateFlagStatic(flag.static);
-        if (!flagStaticValidation.valid) {
-            showAlert(`Flag ${j + 1} - Flag Value: ${flagStaticValidation.error}`, 'Validation Error');
-            return;
+        
+        // Validate based on flag type
+        if (flag.multipleChoice) {
+            // Validate multiple choice flag
+            if (!flag.multipleChoice.wrongAnswersFeedback || flag.multipleChoice.wrongAnswersFeedback.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
+                return;
+            }
+            if (!flag.multipleChoice.correctAnswersFeedback || flag.multipleChoice.correctAnswersFeedback.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the correct answers feedback`, 'Missing Information');
+                return;
+            }
+            
+            const answerKeys = Object.keys(flag.multipleChoice.answers);
+            if (answerKeys.length < 2) {
+                showAlert(`Flag ${j + 1} - Multiple choice flags require at least 2 answer options`, 'Too Few Answers');
+                return;
+            }
+            if (answerKeys.length > 5) {
+                showAlert(`Flag ${j + 1} - Multiple choice flags can have at most 5 answer options`, 'Too Many Answers');
+                return;
+            }
+            
+            const hasCorrectAnswer = Object.values(flag.multipleChoice.answers).some(answer => answer.correct);
+            if (!hasCorrectAnswer) {
+                showAlert(`Flag ${j + 1} - Please mark at least one answer as correct`, 'No Correct Answer');
+                return;
+            }
+        } else {
+            // Validate static flag
+            const flagStaticValidation = validateFlagStatic(flag.static);
+            if (!flagStaticValidation.valid) {
+                showAlert(`Flag ${j + 1} - Flag Value: ${flagStaticValidation.error}`, 'Validation Error');
+                return;
+            }
         }
     }
 
@@ -1011,6 +1269,7 @@ function resetForm() {
             document.getElementById('flagsContainer').innerHTML = '';
             instanceCounter = 0;
             flagCounter = 0;
+            answerCounter = 0;
             addInstance();
         }
     });

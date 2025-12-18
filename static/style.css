@@ -409,8 +409,21 @@ header p {
     align-items: flex-end;
 }
 
+.answer-entry {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+
 .dns-entry .form-group,
-.flag-entry .form-group {
+.flag-entry .form-group,
+.answer-entry .form-group {
     flex: 1;
     min-width: 200px;
     margin-bottom: 0;
@@ -587,12 +600,14 @@ header p {
     }
 
     .dns-entry,
-    .flag-entry {
+    .flag-entry,
+    .answer-entry {
         flex-direction: column;
     }
 
     .dns-entry .form-group,
-    .flag-entry .form-group {
+    .flag-entry .form-group,
+    .answer-entry .form-group {
         width: 100%;
     }
 }
