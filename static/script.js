@@ -615,7 +615,7 @@ function addFlag() {
             </div>
             <div class="form-group" style="flex-basis: 100%;">
                 ${createLabelWithInfo('Correct Answers Feedback *', 'Message shown when the correct answer is selected')}
-                <textarea class="mc-correct-feedback" rows="2">Correct! Well done!</textarea>
+                <textarea class="mc-explanation" rows="2">Correct! Well done!</textarea>
             </div>
             <div style="flex-basis: 100%;">
                 <h4 style="color: #ff6b35; margin: 10px 0;">Answers (2-5 required)</h4>
@@ -677,7 +677,7 @@ function toggleFlagType(flagId) {
     const mcFields = flagEntry.querySelector(`#mc-flag-${sanitizedId}`);
     const staticInput = flagEntry.querySelector('.flag-static');
     const mcWrongFeedback = flagEntry.querySelector('.mc-wrong-feedback');
-    const mcCorrectFeedback = flagEntry.querySelector('.mc-correct-feedback');
+    const mcExplanation = flagEntry.querySelector('.mc-explanation');
     
     if (flagTypeSelect.value === 'multipleChoice') {
         // Show multiple choice, hide static
@@ -685,7 +685,7 @@ function toggleFlagType(flagId) {
         mcFields.style.display = 'flex';
         if (staticInput) staticInput.removeAttribute('required');
         if (mcWrongFeedback) mcWrongFeedback.setAttribute('required', 'required');
-        if (mcCorrectFeedback) mcCorrectFeedback.setAttribute('required', 'required');
+        if (mcExplanation) mcExplanation.setAttribute('required', 'required');
         
         // Initialize with 2 answers if none exist
         const answersContainer = flagEntry.querySelector(`#mc-answers-${sanitizedId}`);
@@ -699,7 +699,7 @@ function toggleFlagType(flagId) {
         mcFields.style.display = 'none';
         if (staticInput) staticInput.setAttribute('required', 'required');
         if (mcWrongFeedback) mcWrongFeedback.removeAttribute('required');
-        if (mcCorrectFeedback) mcCorrectFeedback.removeAttribute('required');
+        if (mcExplanation) mcExplanation.removeAttribute('required');
     }
 }
 
@@ -841,7 +841,7 @@ function collectFormData() {
                 // Collect multiple choice data for this flag
                 flag.multipleChoice = {
                     wrongAnswersFeedback: sanitizeForYaml(flagEntry.querySelector('.mc-wrong-feedback').value),
-                    correctAnswersFeedback: sanitizeForYaml(flagEntry.querySelector('.mc-correct-feedback').value),
+                    explanation: sanitizeForYaml(flagEntry.querySelector('.mc-explanation').value),
                     answers: {}
                 };
                 
@@ -953,7 +953,7 @@ function generateYamlFromData(formData) {
                 if (flagData.multipleChoice) {
                     flag.multipleChoice = {
                         wrongAnswersFeedback: sanitizeForYaml(flagData.multipleChoice.wrongAnswersFeedback),
-                        correctAnswersFeedback: sanitizeForYaml(flagData.multipleChoice.correctAnswersFeedback),
+                        explanation: sanitizeForYaml(flagData.multipleChoice.explanation),
                         answers: {}
                     };
                     
@@ -1058,8 +1058,8 @@ function previewYaml() {
                 showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
                 return;
             }
-            if (!flag.multipleChoice.correctAnswersFeedback || flag.multipleChoice.correctAnswersFeedback.trim().length === 0) {
-                showAlert(`Flag ${j + 1} - Please fill in the correct answers feedback`, 'Missing Information');
+            if (!flag.multipleChoice.explanation || flag.multipleChoice.explanation.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the explanation`, 'Missing Information');
                 return;
             }
             
@@ -1178,8 +1178,8 @@ function generateYaml() {
                 showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
                 return;
             }
-            if (!flag.multipleChoice.correctAnswersFeedback || flag.multipleChoice.correctAnswersFeedback.trim().length === 0) {
-                showAlert(`Flag ${j + 1} - Please fill in the correct answers feedback`, 'Missing Information');
+            if (!flag.multipleChoice.explanation || flag.multipleChoice.explanation.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the explanation`, 'Missing Information');
                 return;
             }
             
