@@ -82,6 +82,7 @@ Each instance can have:
   - Tag (unique identifier)
   - Name (display name)
   - Static flag value
+  - MultipleChoice (multiple choice question structure)
   - Points (awarded for capture, default: 20)
   - Category (dropdown selection)
   - Description (Markdown supported)
