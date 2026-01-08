@@ -614,8 +614,8 @@ function addFlag() {
                 <textarea class="mc-wrong-feedback" rows="2">That's not correct. Try again!</textarea>
             </div>
             <div class="form-group" style="flex-basis: 100%;">
-                ${createLabelWithInfo('Correct Answers Feedback *', 'Message shown when the correct answer is selected')}
-                <textarea class="mc-explanation" rows="2">Correct! Well done!</textarea>
+                ${createLabelWithInfo('Correct Answer Explanation *', 'Message shown when the correct answer is selected')}
+                <textarea class="mc-correct-answer-explanation" rows="2">Correct! Well done!</textarea>
             </div>
             <div style="flex-basis: 100%;">
                 <h4 style="color: #ff6b35; margin: 10px 0;">Answers (2-5 required)</h4>
@@ -677,7 +677,7 @@ function toggleFlagType(flagId) {
     const mcFields = flagEntry.querySelector(`#mc-flag-${sanitizedId}`);
     const staticInput = flagEntry.querySelector('.flag-static');
     const mcWrongFeedback = flagEntry.querySelector('.mc-wrong-feedback');
-    const mcExplanation = flagEntry.querySelector('.mc-explanation');
+    const mcCorrectAnswerExplanation = flagEntry.querySelector('.mc-correct-answer-explanation');
     
     if (flagTypeSelect.value === 'multipleChoice') {
         // Show multiple choice, hide static
@@ -685,7 +685,7 @@ function toggleFlagType(flagId) {
         mcFields.style.display = 'flex';
         if (staticInput) staticInput.removeAttribute('required');
         if (mcWrongFeedback) mcWrongFeedback.setAttribute('required', 'required');
-        if (mcExplanation) mcExplanation.setAttribute('required', 'required');
+        if (mcCorrectAnswerExplanation) mcCorrectAnswerExplanation.setAttribute('required', 'required');
         
         // Initialize with 2 answers if none exist
         const answersContainer = flagEntry.querySelector(`#mc-answers-${sanitizedId}`);
@@ -699,7 +699,7 @@ function toggleFlagType(flagId) {
         mcFields.style.display = 'none';
         if (staticInput) staticInput.setAttribute('required', 'required');
         if (mcWrongFeedback) mcWrongFeedback.removeAttribute('required');
-        if (mcExplanation) mcExplanation.removeAttribute('required');
+        if (mcCorrectAnswerExplanation) mcCorrectAnswerExplanation.removeAttribute('required');
     }
 }
 
@@ -841,7 +841,7 @@ function collectFormData() {
                 // Collect multiple choice data for this flag
                 flag.multipleChoice = {
                     wrongAnswersFeedback: sanitizeForYaml(flagEntry.querySelector('.mc-wrong-feedback').value),
-                    explanation: sanitizeForYaml(flagEntry.querySelector('.mc-explanation').value),
+                    correctAnswerExplanation: sanitizeForYaml(flagEntry.querySelector('.mc-correct-answer-explanation').value),
                     answers: {}
                 };
                 
@@ -953,7 +953,7 @@ function generateYamlFromData(formData) {
                 if (flagData.multipleChoice) {
                     flag.multipleChoice = {
                         wrongAnswersFeedback: sanitizeForYaml(flagData.multipleChoice.wrongAnswersFeedback),
-                        explanation: sanitizeForYaml(flagData.multipleChoice.explanation),
+                        correctAnswerExplanation: sanitizeForYaml(flagData.multipleChoice.correctAnswerExplanation),
                         answers: {}
                     };
                     
@@ -1058,8 +1058,8 @@ function previewYaml() {
                 showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
                 return;
             }
-            if (!flag.multipleChoice.explanation || flag.multipleChoice.explanation.trim().length === 0) {
-                showAlert(`Flag ${j + 1} - Please fill in the explanation`, 'Missing Information');
+            if (!flag.multipleChoice.correctAnswerExplanation || flag.multipleChoice.correctAnswerExplanation.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the correct answer explanation`, 'Missing Information');
                 return;
             }
             
@@ -1178,8 +1178,8 @@ function generateYaml() {
                 showAlert(`Flag ${j + 1} - Please fill in the wrong answers feedback`, 'Missing Information');
                 return;
             }
-            if (!flag.multipleChoice.explanation || flag.multipleChoice.explanation.trim().length === 0) {
-                showAlert(`Flag ${j + 1} - Please fill in the explanation`, 'Missing Information');
+            if (!flag.multipleChoice.correctAnswerExplanation || flag.multipleChoice.correctAnswerExplanation.trim().length === 0) {
+                showAlert(`Flag ${j + 1} - Please fill in the correct answer explanation`, 'Missing Information');
                 return;
             }
             
