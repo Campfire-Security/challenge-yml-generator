@@ -16,7 +16,7 @@ A static web application that provides an intuitive interface to generate `chall
 
 Simply visit the GitHub Pages URL for this repository:
 ```
-https://campfire-security.github.io/challange-yml-generator/
+https://campfire-security.github.io/challenge-yml-generator/
 ```
 
 ### Local Testing
