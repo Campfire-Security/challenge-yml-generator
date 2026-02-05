@@ -804,16 +804,16 @@ function validateTranslations(formData) {
     // Validate instance image translations
     if (!formData.static) {
         formData.instances.forEach((instance, idx) => {
-            if (instance.imageByLanguages) {
+            if (instance.imgByLanguage) {
                 // Check for duplicate languages
-                const langs = Object.keys(instance.imageByLanguages);
+                const langs = Object.keys(instance.imgByLanguage);
                 const uniqueLangs = new Set(langs);
                 if (langs.length !== uniqueLangs.size) {
                     errors.push(`Service ${idx + 1}: Duplicate language codes found in image translations`);
                 }
                 
                 // Check that all translations have values
-                for (const [lang, value] of Object.entries(instance.imageByLanguages)) {
+                for (const [lang, value] of Object.entries(instance.imgByLanguage)) {
                     if (!value || value.trim().length === 0) {
                         errors.push(`Service ${idx + 1}: Translation for language '${lang}' is empty`);
                     }
@@ -828,14 +828,14 @@ function validateTranslations(formData) {
             const flagNum = flagIdx + 1;
             
             // Validate TD translations
-            if (flag.tdByLanguages) {
-                const tdLangs = Object.keys(flag.tdByLanguages);
+            if (flag.tdByLanguage) {
+                const tdLangs = Object.keys(flag.tdByLanguage);
                 const uniqueTdLangs = new Set(tdLangs);
                 if (tdLangs.length !== uniqueTdLangs.size) {
                     errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in description translations`);
                 }
                 
-                for (const [lang, value] of Object.entries(flag.tdByLanguages)) {
+                for (const [lang, value] of Object.entries(flag.tdByLanguage)) {
                     if (!value || value.trim().length === 0) {
                         errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' description is empty`);
                     }
@@ -843,8 +843,8 @@ function validateTranslations(formData) {
             }
             
             // Validate multiple choice translations
-            if (flag.multipleChoiceByLanguages && flag.multipleChoice) {
-                const mcLangs = Object.keys(flag.multipleChoiceByLanguages);
+            if (flag.multipleChoiceByLanguage && flag.multipleChoice) {
+                const mcLangs = Object.keys(flag.multipleChoiceByLanguage);
                 const uniqueMcLangs = new Set(mcLangs);
                 if (mcLangs.length !== uniqueMcLangs.size) {
                     errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in multiple choice translations`);
@@ -854,7 +854,7 @@ function validateTranslations(formData) {
                 const originalAnswerKeys = Object.keys(flag.multipleChoice.answers);
                 const originalAnswerCount = originalAnswerKeys.length;
                 
-                for (const [lang, mcData] of Object.entries(flag.multipleChoiceByLanguages)) {
+                for (const [lang, mcData] of Object.entries(flag.multipleChoiceByLanguage)) {
                     // Check required fields
                     if (!mcData.wrongAnswersFeedback || mcData.wrongAnswersFeedback.trim().length === 0) {
                         errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' is missing wrong answers feedback`);
@@ -1524,7 +1524,7 @@ function collectFormData() {
             if (imageTranslationsContainer) {
                 const imageTranslations = imageTranslationsContainer.querySelectorAll('.translation-entry');
                 if (imageTranslations.length > 0) {
-                    instance.imageByLanguages = {};
+                    instance.imgByLanguage = {};
                     imageTranslations.forEach(translationEntry => {
                         const lang = sanitizeForYaml(translationEntry.querySelector('.image-translation-lang').value.trim());
                         let translationValue = sanitizeForYaml(translationEntry.querySelector('.image-translation-value').value.trim());
@@ -1533,7 +1533,7 @@ function collectFormData() {
                             if (translationValue.startsWith('ghcr.io/campfire-security/')) {
                                 translationValue = translationValue.replace('ghcr.io/campfire-security/', '');
                             }
-                            instance.imageByLanguages[lang] = translationValue;
+                            instance.imgByLanguage[lang] = translationValue;
                         }
                     });
                 }
@@ -1564,12 +1564,12 @@ function collectFormData() {
             if (tdTranslationsContainer) {
                 const tdTranslations = tdTranslationsContainer.querySelectorAll('.translation-entry');
                 if (tdTranslations.length > 0) {
-                    flag.tdByLanguages = {};
+                    flag.tdByLanguage = {};
                     tdTranslations.forEach(translationEntry => {
                         const lang = sanitizeForYaml(translationEntry.querySelector('.td-translation-lang').value.trim());
                         const translationValue = sanitizeForYaml(translationEntry.querySelector('.td-translation-value').value.trim());
                         if (lang && translationValue) {
-                            flag.tdByLanguages[lang] = translationValue;
+                            flag.tdByLanguage[lang] = translationValue;
                         }
                     });
                 }
@@ -1605,7 +1605,7 @@ function collectFormData() {
                 if (mcTranslationsContainer) {
                     const mcTranslations = mcTranslationsContainer.querySelectorAll('.mc-translation-entry');
                     if (mcTranslations.length > 0) {
-                        flag.multipleChoiceByLanguages = {};
+                        flag.multipleChoiceByLanguage = {};
                         mcTranslations.forEach(translationEntry => {
                             const lang = sanitizeForYaml(translationEntry.querySelector('.mc-translation-lang').value.trim());
                             if (lang) {
@@ -1613,7 +1613,7 @@ function collectFormData() {
                                 const correctExplanation = sanitizeForYaml(translationEntry.querySelector('.mc-translation-correct-explanation').value.trim());
                                 
                                 if (wrongFeedback && correctExplanation) {
-                                    flag.multipleChoiceByLanguages[lang] = {
+                                    flag.multipleChoiceByLanguage[lang] = {
                                         wrongAnswersFeedback: wrongFeedback,
                                         correctAnswerExplanation: correctExplanation,
                                         answers: {}
@@ -1632,7 +1632,7 @@ function collectFormData() {
                                                 const originalAnswer = answersContainer.querySelector(`.mc-answer-entry[data-answer-key="${answerKey}"]`);
                                                 const isCorrect = originalAnswer ? originalAnswer.querySelector('.answer-correct').checked : false;
                                                 
-                                                flag.multipleChoiceByLanguages[lang].answers[answerKey] = {
+                                                flag.multipleChoiceByLanguage[lang].answers[answerKey] = {
                                                     answerText: answerText,
                                                     correct: isCorrect
                                                 };
@@ -1705,11 +1705,11 @@ function generateYamlFromData(formData) {
                     image: `ghcr.io/campfire-security/${imageSuffix}`
                 };
 
-                // Add imageByLanguages if present
-                if (instanceData.imageByLanguages && Object.keys(instanceData.imageByLanguages).length > 0) {
-                    instance.imageByLanguages = {};
-                    for (const [lang, imageValue] of Object.entries(instanceData.imageByLanguages)) {
-                        instance.imageByLanguages[lang] = `ghcr.io/campfire-security/${imageValue}`;
+                // Add imgByLanguage if present
+                if (instanceData.imgByLanguage && Object.keys(instanceData.imgByLanguage).length > 0) {
+                    instance.imgByLanguage = {};
+                    for (const [lang, imageValue] of Object.entries(instanceData.imgByLanguage)) {
+                        instance.imgByLanguage[lang] = `ghcr.io/campfire-security/${imageValue}`;
                     }
                 }
 
@@ -1740,11 +1740,11 @@ function generateYamlFromData(formData) {
                     td: sanitizeForYaml(flagData.td)
                 };
                 
-                // Add tdByLanguages if present
-                if (flagData.tdByLanguages && Object.keys(flagData.tdByLanguages).length > 0) {
-                    flag.tdByLanguages = {};
-                    for (const [lang, tdValue] of Object.entries(flagData.tdByLanguages)) {
-                        flag.tdByLanguages[lang] = sanitizeForYaml(tdValue);
+                // Add tdByLanguage if present
+                if (flagData.tdByLanguage && Object.keys(flagData.tdByLanguage).length > 0) {
+                    flag.tdByLanguage = {};
+                    for (const [lang, tdValue] of Object.entries(flagData.tdByLanguage)) {
+                        flag.tdByLanguage[lang] = sanitizeForYaml(tdValue);
                     }
                 }
                 
@@ -1763,18 +1763,18 @@ function generateYamlFromData(formData) {
                         };
                     }
                     
-                    // Add multipleChoiceByLanguages if present
-                    if (flagData.multipleChoiceByLanguages && Object.keys(flagData.multipleChoiceByLanguages).length > 0) {
-                        flag.multipleChoiceByLanguages = {};
-                        for (const [lang, mcData] of Object.entries(flagData.multipleChoiceByLanguages)) {
-                            flag.multipleChoiceByLanguages[lang] = {
+                    // Add multipleChoiceByLanguage if present
+                    if (flagData.multipleChoiceByLanguage && Object.keys(flagData.multipleChoiceByLanguage).length > 0) {
+                        flag.multipleChoiceByLanguage = {};
+                        for (const [lang, mcData] of Object.entries(flagData.multipleChoiceByLanguage)) {
+                            flag.multipleChoiceByLanguage[lang] = {
                                 wrongAnswersFeedback: sanitizeForYaml(mcData.wrongAnswersFeedback),
                                 correctAnswerExplanation: sanitizeForYaml(mcData.correctAnswerExplanation),
                                 answers: {}
                             };
                             
                             for (const [answerKey, answerValue] of Object.entries(mcData.answers)) {
-                                flag.multipleChoiceByLanguages[lang].answers[answerKey] = {
+                                flag.multipleChoiceByLanguage[lang].answers[answerKey] = {
                                     answerText: sanitizeForYaml(answerValue.answerText),
                                     correct: answerValue.correct
                                 };
