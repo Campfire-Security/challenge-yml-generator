@@ -534,7 +534,30 @@ function validateNoDuplicates(formData) {
 // Translation helper functions
 function createLanguageSelect(selectedLang = '') {
     let options = '<option value="">Select Language...</option>';
+    
+    // Priority languages in specific order
+    const priorityCodes = ['da', 'en', 'de', 'es', 'pt'];
+    const priorityLangs = [];
+    const otherLangs = [];
+    
     LANGUAGES.forEach(lang => {
+        if (priorityCodes.includes(lang.code)) {
+            priorityLangs.push(lang);
+        } else {
+            otherLangs.push(lang);
+        }
+    });
+    
+    // Sort priority languages by the priority order
+    priorityLangs.sort((a, b) => priorityCodes.indexOf(a.code) - priorityCodes.indexOf(b.code));
+    
+    // Sort other languages alphabetically by name
+    otherLangs.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Combine both lists
+    const sortedLanguages = [...priorityLangs, ...otherLangs];
+    
+    sortedLanguages.forEach(lang => {
         const selected = lang.code === selectedLang ? 'selected' : '';
         const safeLangCode = escapeHtml(lang.code);
         const safeLangName = escapeHtml(lang.name);
@@ -556,25 +579,54 @@ function addImageTranslation(instanceId) {
     translationDiv.setAttribute('data-instance-id', sanitizedId);
     
     const safeTranslationCounter = escapeHtml(String(translationCounter));
-    const nameSlug = getChallengeNameSlug();
+    const safeInstanceId = escapeHtml(String(instanceId));
     
     translationDiv.innerHTML = `
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
             <div style="flex: 1; min-width: 150px;">
                 <label>Language *</label>
-                <select class="image-translation-lang" required onchange="checkDuplicateLanguages(${sanitizedId}, 'image')">
+                <select class="image-translation-lang" required onchange="updateImageTranslationValue(${safeTranslationCounter}, ${safeInstanceId}); checkDuplicateLanguages(${sanitizedId}, 'image')">
                     ${createLanguageSelect()}
                 </select>
             </div>
             <div style="flex: 2; min-width: 250px;">
                 <label>Translated Image Tag *</label>
-                <input type="text" class="image-translation-value" placeholder="${nameSlug}:service${instanceId}-de" required>
+                <input type="text" class="image-translation-value" placeholder="Select a language to auto-generate" required disabled>
             </div>
             <button type="button" class="btn remove-btn" onclick="removeImageTranslation(${safeTranslationCounter}, ${sanitizedId})">Remove</button>
         </div>
     `;
     
     translationsContainer.appendChild(translationDiv);
+}
+
+function updateImageTranslationValue(translationId, instanceId) {
+    const translationEntry = document.getElementById(`image-translation-${translationId}`);
+    if (!translationEntry) return;
+    
+    const langSelect = translationEntry.querySelector('.image-translation-lang');
+    const valueInput = translationEntry.querySelector('.image-translation-value');
+    const instanceCard = document.getElementById(`instance-${instanceId}`);
+    
+    if (!langSelect || !valueInput || !instanceCard) return;
+    
+    const langCode = langSelect.value;
+    if (!langCode) {
+        valueInput.value = '';
+        return;
+    }
+    
+    // Get the base image from the instance
+    const baseImageInput = instanceCard.querySelector('.instance-image');
+    if (baseImageInput && baseImageInput.value) {
+        let baseImage = baseImageInput.value.trim();
+        // Remove prefix if present
+        if (baseImage.startsWith('ghcr.io/campfire-security/')) {
+            baseImage = baseImage.replace('ghcr.io/campfire-security/', '');
+        }
+        // Append language code
+        valueInput.value = `${baseImage}-${langCode}`;
+    }
 }
 
 function removeImageTranslation(translationId, instanceId) {
@@ -662,9 +714,9 @@ function addMcTranslation(flagId) {
         const isCorrect = answerEntry.querySelector('.answer-correct').checked;
         const correctLabel = isCorrect ? ' ✓ (correct)' : '';
         answerFields += `
-            <div style="margin-bottom: 10px;">
-                <label>Answer ${index + 1}${correctLabel} *</label>
-                <input type="text" class="mc-translation-answer" data-answer-key="${key}" placeholder="Translated answer ${index + 1}" required>
+            <div class="form-group" data-answer-key="${key}" style="margin-bottom: 10px;">
+                <label>Translated Answer ${index + 1}${correctLabel} *</label>
+                <input type="text" class="mc-translation-answer-${index + 1}" placeholder="Translated answer ${index + 1}..." required>
             </div>
         `;
     });
@@ -690,7 +742,9 @@ function addMcTranslation(flagId) {
             </div>
             <div>
                 <h5 style="color: #ff6b35; margin-bottom: 10px;">Translated Answers</h5>
-                ${answerFields}
+                <div id="mc-translation-answers-${safeTranslationCounter}">
+                    ${answerFields}
+                </div>
             </div>
         </div>
     `;
@@ -953,7 +1007,7 @@ function addInstance() {
             <input type="text" class="dns-name" data-instance-id="${safeInstanceCounter}" placeholder="service1.cfire" ${requiredAttr} pattern="[a-z0-9.\-]+\.cfire$">
         </div>
         <div class="form-group translation-section" ${staticAttr}>
-            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('image-${safeInstanceCounter}', this)">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('image-translations-section-${safeInstanceCounter}', this)">
                 + Image Translations (Optional)
             </button>
             <div id="image-translations-section-${safeInstanceCounter}" class="translation-container" style="display: none;">
@@ -969,7 +1023,7 @@ function addInstance() {
 }
 
 function toggleTranslationSection(sectionId, button) {
-    const section = document.getElementById(`${sectionId}-translations-section`);
+    const section = document.getElementById(sectionId);
     if (section && button) {
         if (section.style.display === 'none') {
             section.style.display = 'block';
@@ -1019,6 +1073,11 @@ function updateAllInstancesForStatic() {
             if (removeButton) {
                 removeButton.style.display = 'none';
             }
+            // Hide translation section for static challenges
+            const translationSection = firstCard.querySelector('.translation-section');
+            if (translationSection) {
+                translationSection.style.display = 'none';
+            }
         }
 
         // Hide the "Add Service" button when static
@@ -1033,6 +1092,7 @@ function updateAllInstancesForStatic() {
             const dnsGroup = dnsInput ? dnsInput.closest('.form-group') : null;
             const removeButton = card.querySelector('.btn-danger');
             const nameSlug = getChallengeNameSlug();
+            const instanceId = card.id.replace('instance-', '');
 
             if (imageInput) {
                 const safeNameSlug = sanitizeForAttribute(nameSlug);
@@ -1049,6 +1109,30 @@ function updateAllInstancesForStatic() {
             // Show remove button for non-static services
             if (removeButton) {
                 removeButton.style.display = 'inline-block';
+            }
+            
+            // Add translation section if it doesn't exist
+            if (!card.querySelector('.translation-section')) {
+                const translationSection = document.createElement('div');
+                translationSection.className = 'form-group translation-section';
+                translationSection.innerHTML = `
+                    <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('image-translations-section-${instanceId}', this)">
+                        + Image Translations (Optional)
+                    </button>
+                    <div id="image-translations-section-${instanceId}" class="translation-container" style="display: none;">
+                        <div id="image-translations-${instanceId}" class="translations-list">
+                            <!-- Image translations will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addImageTranslation(${instanceId})">+ Add Translation</button>
+                    </div>
+                `;
+                card.appendChild(translationSection);
+            } else {
+                // Show existing translation section
+                const translationSection = card.querySelector('.translation-section');
+                if (translationSection) {
+                    translationSection.style.display = 'block';
+                }
             }
         });
 
@@ -1158,6 +1242,19 @@ function addFlag() {
             </div>
         </div>
         
+        <!-- MC Translation Section -->
+        <div class="form-group translation-section" id="mc-translation-section-${safeFlagCounter}" style="display: none; flex-basis: 100%; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('mc-translations-section-${safeFlagCounter}', this)">
+                + Multiple Choice Translations (Optional)
+            </button>
+            <div id="mc-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
+                <div id="mc-translations-${safeFlagCounter}" class="translations-list">
+                    <!-- MC translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addMcTranslation(${safeFlagCounter})">+ Add Translation</button>
+            </div>
+        </div>
+        
         <div class="form-group">
             ${createLabelWithInfo('Points *', 'Points awarded for capturing this flag')}
             <input type="number" class="flag-points" value="20" placeholder="20" min="0" required>
@@ -1183,7 +1280,7 @@ function addFlag() {
         
         <!-- TD Translation Section -->
         <div class="form-group translation-section" style="flex-basis: 100%;">
-            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('td-${safeFlagCounter}', this)">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('td-translations-section-${safeFlagCounter}', this)">
                 + Description Translations (Optional)
             </button>
             <div id="td-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
@@ -1191,19 +1288,6 @@ function addFlag() {
                     <!-- TD translations will be added here -->
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="addTdTranslation(${safeFlagCounter})">+ Add Translation</button>
-            </div>
-        </div>
-        
-        <!-- MC Translation Section (only shown for multiple choice) -->
-        <div class="mc-translation-section" id="mc-translation-section-${safeFlagCounter}" style="display: none; flex-basis: 100%;">
-            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('mc-${safeFlagCounter}', this)">
-                + Multiple Choice Translations (Optional)
-            </button>
-            <div id="mc-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
-                <div id="mc-translations-${safeFlagCounter}" class="translations-list">
-                    <!-- MC translations will be added here -->
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="addMcTranslation(${safeFlagCounter})">+ Add Translation</button>
             </div>
         </div>
         
@@ -1308,6 +1392,26 @@ function addAnswerToFlag(flagId) {
     `;
     
     answersContainer.appendChild(answerDiv);
+    
+    // Also add corresponding answer field to all existing translations
+    const translationsContainer = document.getElementById(`mc-translations-${sanitizedId}`);
+    if (translationsContainer) {
+        const translations = translationsContainer.querySelectorAll('.mc-translation-entry');
+        translations.forEach(translationEntry => {
+            // Find the translated answers container within this translation
+            const translatedAnswersDiv = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+            if (translatedAnswersDiv) {
+                const newAnswerField = document.createElement('div');
+                newAnswerField.className = 'form-group';
+                newAnswerField.setAttribute('data-answer-key', answerKey);
+                newAnswerField.innerHTML = `
+                    <label>Translated Answer ${nextKeyIndex} *</label>
+                    <input type="text" class="mc-translation-answer-${nextKeyIndex}" placeholder="Translated answer ${nextKeyIndex}..." required>
+                `;
+                translatedAnswersDiv.appendChild(newAnswerField);
+            }
+        });
+    }
 }
 
 function removeAnswerFromFlag(answerId, flagId) {
@@ -1326,13 +1430,47 @@ function removeAnswerFromFlag(answerId, flagId) {
     
     const answer = document.getElementById(`answer-${sanitizedAnswerId}`);
     if (answer) {
+        const answerKey = answer.getAttribute('data-answer-key');
         answer.remove();
+        
         // Reindex remaining answers
         const remainingAnswers = answersContainer.querySelectorAll('.mc-answer-entry');
         remainingAnswers.forEach((answerEntry, index) => {
             const newKey = `answer-${index + 1}`;
             answerEntry.setAttribute('data-answer-key', newKey);
         });
+        
+        // Also remove and reindex translation answer fields
+        const translationsContainer = document.getElementById(`mc-translations-${sanitizedFlagId}`);
+        if (translationsContainer) {
+            const translations = translationsContainer.querySelectorAll('.mc-translation-entry');
+            translations.forEach(translationEntry => {
+                const translatedAnswersDiv = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+                if (translatedAnswersDiv) {
+                    // Remove the answer field with matching data-answer-key
+                    const answerFieldToRemove = translatedAnswersDiv.querySelector(`[data-answer-key="${answerKey}"]`);
+                    if (answerFieldToRemove) {
+                        answerFieldToRemove.remove();
+                    }
+                    
+                    // Reindex remaining answer fields
+                    const remainingFields = translatedAnswersDiv.querySelectorAll('.form-group[data-answer-key]');
+                    remainingFields.forEach((field, index) => {
+                        const newKey = `answer-${index + 1}`;
+                        field.setAttribute('data-answer-key', newKey);
+                        
+                        const label = field.querySelector('label');
+                        if (label) label.textContent = `Translated Answer ${index + 1} *`;
+                        
+                        const input = field.querySelector('input');
+                        if (input) {
+                            input.className = `mc-translation-answer-${index + 1}`;
+                            input.placeholder = `Translated answer ${index + 1}...`;
+                        }
+                    });
+                }
+            });
+        }
     }
 }
 
@@ -1482,21 +1620,25 @@ function collectFormData() {
                                     };
                                     
                                     // Collect translated answers
-                                    const translatedAnswers = translationEntry.querySelectorAll('.mc-translation-answer');
-                                    translatedAnswers.forEach(translatedAnswer => {
-                                        const answerKey = translatedAnswer.getAttribute('data-answer-key');
-                                        const answerText = sanitizeForYaml(translatedAnswer.value.trim());
-                                        if (answerKey && answerText) {
-                                            // Get the correctness from the original answer
-                                            const originalAnswer = answersContainer.querySelector(`.mc-answer-entry[data-answer-key="${answerKey}"]`);
-                                            const isCorrect = originalAnswer ? originalAnswer.querySelector('.answer-correct').checked : false;
-                                            
-                                            flag.multipleChoiceByLanguages[lang].answers[answerKey] = {
-                                                answerText: answerText,
-                                                correct: isCorrect
-                                            };
-                                        }
-                                    });
+                                    const translatedAnswersContainer = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+                                    if (translatedAnswersContainer) {
+                                        const answerFields = translatedAnswersContainer.querySelectorAll('.form-group[data-answer-key]');
+                                        answerFields.forEach(answerField => {
+                                            const answerKey = answerField.getAttribute('data-answer-key');
+                                            const answerInput = answerField.querySelector('input');
+                                            const answerText = answerInput ? sanitizeForYaml(answerInput.value.trim()) : '';
+                                            if (answerKey && answerText) {
+                                                // Get the correctness from the original answer
+                                                const originalAnswer = answersContainer.querySelector(`.mc-answer-entry[data-answer-key="${answerKey}"]`);
+                                                const isCorrect = originalAnswer ? originalAnswer.querySelector('.answer-correct').checked : false;
+                                                
+                                                flag.multipleChoiceByLanguages[lang].answers[answerKey] = {
+                                                    answerText: answerText,
+                                                    correct: isCorrect
+                                                };
+                                            }
+                                        });
+                                    }
                                 }
                             }
                         });
