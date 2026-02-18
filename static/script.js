@@ -681,6 +681,48 @@ function removeTdTranslation(translationId, flagId) {
     }
 }
 
+function addNameTranslation(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const translationsContainer = document.getElementById(`name-translations-${sanitizedId}`);
+    if (!translationsContainer) return;
+    
+    translationCounter++;
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'translation-entry';
+    translationDiv.id = `name-translation-${translationCounter}`;
+    translationDiv.setAttribute('data-flag-id', sanitizedId);
+    
+    const safeTranslationCounter = escapeHtml(String(translationCounter));
+    
+    translationDiv.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 15px;">
+            <div style="flex: 1; min-width: 150px;">
+                <label>Language *</label>
+                <select class="name-translation-lang" required onchange="checkDuplicateLanguages(${sanitizedId}, 'name')">
+                    ${createLanguageSelect()}
+                </select>
+            </div>
+            <div style="flex: 3; min-width: 300px;">
+                <label>Translated Name *</label>
+                <input type="text" class="name-translation-value" placeholder="Translated challenge name..." required>
+            </div>
+            <button type="button" class="btn remove-btn" onclick="removeNameTranslation(${safeTranslationCounter}, ${sanitizedId})" style="margin-top: 23px;">Remove</button>
+        </div>
+    `;
+    
+    translationsContainer.appendChild(translationDiv);
+}
+
+function removeNameTranslation(translationId, flagId) {
+    const sanitizedTranslationId = String(translationId).replace(/[^0-9]/g, '');
+    const sanitizedFlagId = String(flagId).replace(/[^0-9]/g, '');
+    const translation = document.getElementById(`name-translation-${sanitizedTranslationId}`);
+    if (translation) {
+        translation.remove();
+        checkDuplicateLanguages(sanitizedFlagId, 'name');
+    }
+}
+
 function addMcTranslation(flagId) {
     const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
     const flagEntry = document.getElementById(`flag-${sanitizedId}`);
@@ -776,6 +818,9 @@ function checkDuplicateLanguages(entityId, type) {
     } else if (type === 'mc') {
         selector = `#mc-translations-${sanitizedId} .mc-translation-lang`;
         container = document.getElementById(`mc-translations-${sanitizedId}`);
+    } else if (type === 'name') {
+        selector = `#name-translations-${sanitizedId} .name-translation-lang`;
+        container = document.getElementById(`name-translations-${sanitizedId}`);
     }
     
     if (!container) return;
@@ -804,16 +849,16 @@ function validateTranslations(formData) {
     // Validate instance image translations
     if (!formData.static) {
         formData.instances.forEach((instance, idx) => {
-            if (instance.imgByLanguage) {
+            if (instance.imageByLanguage) {
                 // Check for duplicate languages
-                const langs = Object.keys(instance.imgByLanguage);
+                const langs = Object.keys(instance.imageByLanguage);
                 const uniqueLangs = new Set(langs);
                 if (langs.length !== uniqueLangs.size) {
                     errors.push(`Service ${idx + 1}: Duplicate language codes found in image translations`);
                 }
                 
                 // Check that all translations have values
-                for (const [lang, value] of Object.entries(instance.imgByLanguage)) {
+                for (const [lang, value] of Object.entries(instance.imageByLanguage)) {
                     if (!value || value.trim().length === 0) {
                         errors.push(`Service ${idx + 1}: Translation for language '${lang}' is empty`);
                     }
@@ -826,6 +871,21 @@ function validateTranslations(formData) {
     if (formData.flags) {
         formData.flags.forEach((flag, flagIdx) => {
             const flagNum = flagIdx + 1;
+            
+            // Validate name translations
+            if (flag.nameByLanguage) {
+                const nameLangs = Object.keys(flag.nameByLanguage);
+                const uniqueNameLangs = new Set(nameLangs);
+                if (nameLangs.length !== uniqueNameLangs.size) {
+                    errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in name translations`);
+                }
+                
+                for (const [lang, value] of Object.entries(flag.nameByLanguage)) {
+                    if (!value || value.trim().length === 0) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' name is empty`);
+                    }
+                }
+            }
             
             // Validate TD translations
             if (flag.tdByLanguage) {
@@ -1200,22 +1260,36 @@ function addFlag() {
 
     flagDiv.innerHTML = `
         <div class="form-group">
-            ${createLabelWithInfo('Flag Tag *', 'Lowercase letters, numbers, hyphens, and underscores only')}
+            ${createLabelWithInfo('Challenge Tag *', 'Lowercase letters, numbers, hyphens, and underscores only')}
             <input type="text" class="flag-tag" placeholder="challenge-template-1" required pattern="[a-z0-9\-_]+">
         </div>
         <div class="form-group">
-            ${createLabelWithInfo('Flag Name *', 'Display name shown on the platform')}
+            ${createLabelWithInfo('Challenge Name *', 'Display name shown on the platform')}
             <input type="text" class="flag-name" placeholder="Challenge name" required>
         </div>
+        
+        <!-- Name Translation Section -->
+        <div class="form-group translation-section" style="flex-basis: 100%;">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('name-translations-section-${safeFlagCounter}', this)">
+                + Name Translations (Optional)
+            </button>
+            <div id="name-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
+                <div id="name-translations-${safeFlagCounter}" class="translations-list">
+                    <!-- Name translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addNameTranslation(${safeFlagCounter})">+ Add Translation</button>
+            </div>
+        </div>
+        
         <div class="form-group">
-            ${createLabelWithInfo('Flag Type *', 'Choose between a static flag value or multiple choice quiz')}
+            ${createLabelWithInfo('Challenge Type *', 'Choose between a static challenge value or multiple choice quiz')}
             <select class="flag-type" required onchange="toggleFlagType(${safeFlagCounter})">
-                <option value="static" selected>Static Flag</option>
+                <option value="static" selected>Static Challenge</option>
                 <option value="multipleChoice">Multiple Choice</option>
             </select>
         </div>
         
-        <!-- Static Flag Fields -->
+        <!-- Static Challenge Fields -->
         <div class="static-flag-fields" id="static-flag-${safeFlagCounter}">
             <div class="form-group">
                 ${createLabelWithInfo('Static Flag Value *', 'Must be FIRE{...} or DDC{...} format with 6-50 characters inside braces. Allowed characters: letters (a-z, A-Z), numbers (0-9), hyphens (-), underscores (_).\\n\\nExample flags:\\n\\n• FIRE{flag_here_in_1337speak}\\n• DDC{h4nds_up_7h1s_15_4_r0pp3ry}\\n• FIRE{771b2f7a-d8f2-48f9-856e-70a83c9dd65c}')}
@@ -1274,7 +1348,7 @@ function addFlag() {
             </select>
         </div>
         <div class="form-group" style="flex-basis: 100%;">
-            ${createLabelWithInfo('Flag Description (TD) *', 'Description formatted in markdown. For static challenges, include links to handouts along with SHA256 checksums for verification.')}
+            ${createLabelWithInfo('Challenge description (TD) *', 'Description formatted in markdown. For static challenges, include links to handouts along with SHA256 checksums for verification.')}
             <textarea class="flag-td" rows="4" placeholder="Challenge description goes here in markdown format." required></textarea>
         </div>
         
@@ -1524,7 +1598,7 @@ function collectFormData() {
             if (imageTranslationsContainer) {
                 const imageTranslations = imageTranslationsContainer.querySelectorAll('.translation-entry');
                 if (imageTranslations.length > 0) {
-                    instance.imgByLanguage = {};
+                    instance.imageByLanguage = {};
                     imageTranslations.forEach(translationEntry => {
                         const lang = sanitizeForYaml(translationEntry.querySelector('.image-translation-lang').value.trim());
                         let translationValue = sanitizeForYaml(translationEntry.querySelector('.image-translation-value').value.trim());
@@ -1533,7 +1607,7 @@ function collectFormData() {
                             if (translationValue.startsWith('ghcr.io/campfire-security/')) {
                                 translationValue = translationValue.replace('ghcr.io/campfire-security/', '');
                             }
-                            instance.imgByLanguage[lang] = translationValue;
+                            instance.imageByLanguage[lang] = translationValue;
                         }
                     });
                 }
@@ -1558,6 +1632,22 @@ function collectFormData() {
                 category: sanitizeForYaml(flagEntry.querySelector('.flag-category').value),
                 td: sanitizeForYaml(flagEntry.querySelector('.flag-td').value)
             };
+            
+            // Collect name translations
+            const nameTranslationsContainer = flagEntry.querySelector(`#name-translations-${flagId}`);
+            if (nameTranslationsContainer) {
+                const nameTranslations = nameTranslationsContainer.querySelectorAll('.translation-entry');
+                if (nameTranslations.length > 0) {
+                    flag.nameByLanguage = {};
+                    nameTranslations.forEach(translationEntry => {
+                        const lang = sanitizeForYaml(translationEntry.querySelector('.name-translation-lang').value.trim());
+                        const translationValue = sanitizeForYaml(translationEntry.querySelector('.name-translation-value').value.trim());
+                        if (lang && translationValue) {
+                            flag.nameByLanguage[lang] = translationValue;
+                        }
+                    });
+                }
+            }
             
             // Collect TD translations
             const tdTranslationsContainer = flagEntry.querySelector(`#td-translations-${flagId}`);
@@ -1705,11 +1795,11 @@ function generateYamlFromData(formData) {
                     image: `ghcr.io/campfire-security/${imageSuffix}`
                 };
 
-                // Add imgByLanguage if present
-                if (instanceData.imgByLanguage && Object.keys(instanceData.imgByLanguage).length > 0) {
-                    instance.imgByLanguage = {};
-                    for (const [lang, imageValue] of Object.entries(instanceData.imgByLanguage)) {
-                        instance.imgByLanguage[lang] = `ghcr.io/campfire-security/${imageValue}`;
+                // Add imageByLanguage if present
+                if (instanceData.imageByLanguage && Object.keys(instanceData.imageByLanguage).length > 0) {
+                    instance.imageByLanguage = {};
+                    for (const [lang, imageValue] of Object.entries(instanceData.imageByLanguage)) {
+                        instance.imageByLanguage[lang] = `ghcr.io/campfire-security/${imageValue}`;
                     }
                 }
 
@@ -1739,6 +1829,14 @@ function generateYamlFromData(formData) {
                     category: sanitizeForYaml(flagData.category),
                     td: sanitizeForYaml(flagData.td)
                 };
+                
+                // Add nameByLanguage if present
+                if (flagData.nameByLanguage && Object.keys(flagData.nameByLanguage).length > 0) {
+                    flag.nameByLanguage = {};
+                    for (const [lang, nameValue] of Object.entries(flagData.nameByLanguage)) {
+                        flag.nameByLanguage[lang] = sanitizeForYaml(nameValue);
+                    }
+                }
                 
                 // Add tdByLanguage if present
                 if (flagData.tdByLanguage && Object.keys(flagData.tdByLanguage).length > 0) {
