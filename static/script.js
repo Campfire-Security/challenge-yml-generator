@@ -1,6 +1,7 @@
 let instanceCounter = 0;
 let flagCounter = 0;
 let answerCounter = 0;
+let translationCounter = 0;
 let previewYamlData = null;
 
 // Predefined answer keys for multiple choice
@@ -155,6 +156,193 @@ const categoryPrefixes = {
     "Misc": "mi_",
     "Operational Technologies": "ot_",
 };
+
+// ISO-639-1 Language codes
+const LANGUAGES = [
+    { code: "aa", name: "Afar", nativeName: "Afaraf" },
+    { code: "ab", name: "Abkhaz", nativeName: "Аҧсуа бызшәа" },
+    { code: "ae", name: "Avestan", nativeName: "Avesta" },
+    { code: "af", name: "Afrikaans", nativeName: "Afrikaans" },
+    { code: "ak", name: "Akan", nativeName: "Akan" },
+    { code: "am", name: "Amharic", nativeName: "አማርኛ" },
+    { code: "an", name: "Aragonese", nativeName: "Aragonés" },
+    { code: "ar", name: "Arabic", nativeName: "العربية" },
+    { code: "as", name: "Assamese", nativeName: "অসমীয়া" },
+    { code: "av", name: "Avaric", nativeName: "Авар мацӀ" },
+    { code: "ay", name: "Aymara", nativeName: "Aymar aru" },
+    { code: "az", name: "Azerbaijani", nativeName: "Azərbaycan dili" },
+    { code: "ba", name: "Bashkir", nativeName: "Башҡорт теле" },
+    { code: "be", name: "Belarusian", nativeName: "Беларуская" },
+    { code: "bg", name: "Bulgarian", nativeName: "Български език" },
+    { code: "bi", name: "Bislama", nativeName: "Bislama" },
+    { code: "bm", name: "Bambara", nativeName: "Bamanankan" },
+    { code: "bn", name: "Bengali", nativeName: "বাংলা" },
+    { code: "bo", name: "Tibetan", nativeName: "བོད་ཡིག" },
+    { code: "br", name: "Breton", nativeName: "Brezhoneg" },
+    { code: "bs", name: "Bosnian", nativeName: "Bosanski jezik" },
+    { code: "ca", name: "Catalan", nativeName: "Català" },
+    { code: "ce", name: "Chechen", nativeName: "Нохчийн мотт" },
+    { code: "ch", name: "Chamorro", nativeName: "Chamoru" },
+    { code: "co", name: "Corsican", nativeName: "Corsu" },
+    { code: "cr", name: "Cree", nativeName: "ᓀᐦᐃᔭᐍᐏᐣ" },
+    { code: "cs", name: "Czech", nativeName: "Čeština" },
+    { code: "cu", name: "Old Church Slavonic", nativeName: "Ѩзыкъ словѣньскъ" },
+    { code: "cv", name: "Chuvash", nativeName: "Чӑваш чӗлхи" },
+    { code: "cy", name: "Welsh", nativeName: "Cymraeg" },
+    { code: "da", name: "Danish", nativeName: "Dansk" },
+    { code: "de", name: "German", nativeName: "Deutsch" },
+    { code: "dv", name: "Divehi", nativeName: "Dhivehi" },
+    { code: "dz", name: "Dzongkha", nativeName: "རྫོང་ཁ" },
+    { code: "ee", name: "Ewe", nativeName: "Eʋegbe" },
+    { code: "el", name: "Greek", nativeName: "Ελληνικά" },
+    { code: "en", name: "English", nativeName: "English" },
+    { code: "eo", name: "Esperanto", nativeName: "Esperanto" },
+    { code: "es", name: "Spanish", nativeName: "Español" },
+    { code: "et", name: "Estonian", nativeName: "Eesti" },
+    { code: "eu", name: "Basque", nativeName: "Euskara" },
+    { code: "fa", name: "Persian", nativeName: "فارسی" },
+    { code: "ff", name: "Fula", nativeName: "Fulfulde" },
+    { code: "fi", name: "Finnish", nativeName: "Suomi" },
+    { code: "fj", name: "Fijian", nativeName: "Vosa Vakaviti" },
+    { code: "fo", name: "Faroese", nativeName: "Føroyskt" },
+    { code: "fr", name: "French", nativeName: "Français" },
+    { code: "fy", name: "Western Frisian", nativeName: "Frysk" },
+    { code: "ga", name: "Irish", nativeName: "Gaeilge" },
+    { code: "gd", name: "Scottish Gaelic", nativeName: "Gàidhlig" },
+    { code: "gl", name: "Galician", nativeName: "Galego" },
+    { code: "gn", name: "Guaraní", nativeName: "Avañe'ẽ" },
+    { code: "gu", name: "Gujarati", nativeName: "ગુજરાતી" },
+    { code: "gv", name: "Manx", nativeName: "Gaelg" },
+    { code: "ha", name: "Hausa", nativeName: "Hausa" },
+    { code: "he", name: "Hebrew", nativeName: "עברית" },
+    { code: "hi", name: "Hindi", nativeName: "हिन्दी" },
+    { code: "ho", name: "Hiri Motu", nativeName: "Hiri Motu" },
+    { code: "hr", name: "Croatian", nativeName: "Hrvatski" },
+    { code: "ht", name: "Haitian", nativeName: "Kreyòl ayisyen" },
+    { code: "hu", name: "Hungarian", nativeName: "Magyar" },
+    { code: "hy", name: "Armenian", nativeName: "Հայերեն" },
+    { code: "hz", name: "Herero", nativeName: "Otjiherero" },
+    { code: "ia", name: "Interlingua", nativeName: "Interlingua" },
+    { code: "id", name: "Indonesian", nativeName: "Bahasa Indonesia" },
+    { code: "ie", name: "Interlingue", nativeName: "Interlingue" },
+    { code: "ig", name: "Igbo", nativeName: "Asụsụ Igbo" },
+    { code: "ii", name: "Nuosu", nativeName: "ꆈꌠ꒿ Nuosuhxop" },
+    { code: "ik", name: "Inupiaq", nativeName: "Iñupiaq" },
+    { code: "io", name: "Ido", nativeName: "Ido" },
+    { code: "is", name: "Icelandic", nativeName: "Íslenska" },
+    { code: "it", name: "Italian", nativeName: "Italiano" },
+    { code: "iu", name: "Inuktitut", nativeName: "ᐃᓄᒃᑎᑐᑦ" },
+    { code: "ja", name: "Japanese", nativeName: "日本語" },
+    { code: "jv", name: "Javanese", nativeName: "Basa Jawa" },
+    { code: "ka", name: "Georgian", nativeName: "ქართული" },
+    { code: "kg", name: "Kongo", nativeName: "KiKongo" },
+    { code: "ki", name: "Kikuyu", nativeName: "Gĩkũyũ" },
+    { code: "kj", name: "Kwanyama", nativeName: "Kuanyama" },
+    { code: "kk", name: "Kazakh", nativeName: "Қазақ тілі" },
+    { code: "kl", name: "Kalaallisut", nativeName: "Kalaallisut" },
+    { code: "km", name: "Khmer", nativeName: "ភាសាខ្មែរ" },
+    { code: "kn", name: "Kannada", nativeName: "ಕನ್ನಡ" },
+    { code: "ko", name: "Korean", nativeName: "한국어" },
+    { code: "kr", name: "Kanuri", nativeName: "Kanuri" },
+    { code: "ks", name: "Kashmiri", nativeName: "कश्मीरी" },
+    { code: "ku", name: "Kurdish", nativeName: "Kurdî" },
+    { code: "kv", name: "Komi", nativeName: "Коми кыв" },
+    { code: "kw", name: "Cornish", nativeName: "Kernewek" },
+    { code: "ky", name: "Kyrgyz", nativeName: "Кыргызча" },
+    { code: "la", name: "Latin", nativeName: "Latīna" },
+    { code: "lb", name: "Luxembourgish", nativeName: "Lëtzebuergesch" },
+    { code: "lg", name: "Ganda", nativeName: "Luganda" },
+    { code: "li", name: "Limburgish", nativeName: "Limburgs" },
+    { code: "ln", name: "Lingala", nativeName: "Lingála" },
+    { code: "lo", name: "Lao", nativeName: "ພາສາລາວ" },
+    { code: "lt", name: "Lithuanian", nativeName: "Lietuvių kalba" },
+    { code: "lu", name: "Luba-Katanga", nativeName: "Kiluba" },
+    { code: "lv", name: "Latvian", nativeName: "Latviešu valoda" },
+    { code: "mg", name: "Malagasy", nativeName: "Fiteny malagasy" },
+    { code: "mh", name: "Marshallese", nativeName: "Kajin M̧ajeļ" },
+    { code: "mi", name: "Māori", nativeName: "Te reo Māori" },
+    { code: "mk", name: "Macedonian", nativeName: "Македонски јазик" },
+    { code: "ml", name: "Malayalam", nativeName: "മലയാളം" },
+    { code: "mn", name: "Mongolian", nativeName: "Монгол" },
+    { code: "mr", name: "Marathi", nativeName: "मराठी" },
+    { code: "ms", name: "Malay", nativeName: "Bahasa Melayu" },
+    { code: "mt", name: "Maltese", nativeName: "Malti" },
+    { code: "my", name: "Burmese", nativeName: "ဗမာစာ" },
+    { code: "na", name: "Nauru", nativeName: "Ekakairũ Naoero" },
+    { code: "nb", name: "Norwegian Bokmål", nativeName: "Norsk bokmål" },
+    { code: "nd", name: "Northern Ndebele", nativeName: "isiNdebele" },
+    { code: "ne", name: "Nepali", nativeName: "नेपाली" },
+    { code: "ng", name: "Ndonga", nativeName: "Owambo" },
+    { code: "nl", name: "Dutch", nativeName: "Nederlands" },
+    { code: "nn", name: "Norwegian Nynorsk", nativeName: "Norsk nynorsk" },
+    { code: "no", name: "Norwegian", nativeName: "Norsk" },
+    { code: "nr", name: "Southern Ndebele", nativeName: "isiNdebele" },
+    { code: "nv", name: "Navajo", nativeName: "Diné bizaad" },
+    { code: "ny", name: "Chichewa", nativeName: "ChiCheŵa" },
+    { code: "oc", name: "Occitan", nativeName: "Occitan" },
+    { code: "oj", name: "Ojibwe", nativeName: "ᐊᓂᔑᓈᐯᒧᐎᓐ" },
+    { code: "om", name: "Oromo", nativeName: "Afaan Oromoo" },
+    { code: "or", name: "Oriya", nativeName: "ଓଡ଼ିଆ" },
+    { code: "os", name: "Ossetian", nativeName: "Ирон æвзаг" },
+    { code: "pa", name: "Panjabi", nativeName: "ਪੰਜਾਬੀ" },
+    { code: "pi", name: "Pāli", nativeName: "पाऴि" },
+    { code: "pl", name: "Polish", nativeName: "Polski" },
+    { code: "ps", name: "Pashto", nativeName: "پښتو" },
+    { code: "pt", name: "Portuguese", nativeName: "Português" },
+    { code: "qu", name: "Quechua", nativeName: "Runa Simi" },
+    { code: "rm", name: "Romansh", nativeName: "Rumantsch grischun" },
+    { code: "rn", name: "Kirundi", nativeName: "Ikirundi" },
+    { code: "ro", name: "Romanian", nativeName: "Română" },
+    { code: "ru", name: "Russian", nativeName: "Русский язык" },
+    { code: "rw", name: "Kinyarwanda", nativeName: "Ikinyarwanda" },
+    { code: "sa", name: "Sanskrit", nativeName: "संस्कृतम्" },
+    { code: "sc", name: "Sardinian", nativeName: "Sardu" },
+    { code: "sd", name: "Sindhi", nativeName: "सिन्धी" },
+    { code: "se", name: "Northern Sami", nativeName: "Davvisámegiella" },
+    { code: "sg", name: "Sango", nativeName: "Yângâ tî sängö" },
+    { code: "si", name: "Sinhala", nativeName: "සිංහල" },
+    { code: "sk", name: "Slovak", nativeName: "Slovenčina" },
+    { code: "sl", name: "Slovenian", nativeName: "Slovenščina" },
+    { code: "sm", name: "Samoan", nativeName: "Gagana fa'a Samoa" },
+    { code: "sn", name: "Shona", nativeName: "ChiShona" },
+    { code: "so", name: "Somali", nativeName: "Soomaaliga" },
+    { code: "sq", name: "Albanian", nativeName: "Shqip" },
+    { code: "sr", name: "Serbian", nativeName: "Српски језик" },
+    { code: "ss", name: "Swati", nativeName: "SiSwati" },
+    { code: "st", name: "Southern Sotho", nativeName: "Sesotho" },
+    { code: "su", name: "Sundanese", nativeName: "Basa Sunda" },
+    { code: "sv", name: "Swedish", nativeName: "Svenska" },
+    { code: "sw", name: "Swahili", nativeName: "Kiswahili" },
+    { code: "ta", name: "Tamil", nativeName: "தமிழ்" },
+    { code: "te", name: "Telugu", nativeName: "తెలుగు" },
+    { code: "tg", name: "Tajik", nativeName: "Тоҷикӣ" },
+    { code: "th", name: "Thai", nativeName: "ไทย" },
+    { code: "ti", name: "Tigrinya", nativeName: "ትግርኛ" },
+    { code: "tk", name: "Turkmen", nativeName: "Türkmen" },
+    { code: "tl", name: "Tagalog", nativeName: "Wikang Tagalog" },
+    { code: "tn", name: "Tswana", nativeName: "Setswana" },
+    { code: "to", name: "Tonga", nativeName: "Faka Tonga" },
+    { code: "tr", name: "Turkish", nativeName: "Türkçe" },
+    { code: "ts", name: "Tsonga", nativeName: "Xitsonga" },
+    { code: "tt", name: "Tatar", nativeName: "Татарча" },
+    { code: "tw", name: "Twi", nativeName: "Twi" },
+    { code: "ty", name: "Tahitian", nativeName: "Reo Tahiti" },
+    { code: "ug", name: "Uyghur", nativeName: "ئۇيغۇرچە" },
+    { code: "uk", name: "Ukrainian", nativeName: "Українська" },
+    { code: "ur", name: "Urdu", nativeName: "اردو" },
+    { code: "uz", name: "Uzbek", nativeName: "Oʻzbek" },
+    { code: "ve", name: "Venda", nativeName: "Tshivenḓa" },
+    { code: "vi", name: "Vietnamese", nativeName: "Tiếng Việt" },
+    { code: "vo", name: "Volapük", nativeName: "Volapük" },
+    { code: "wa", name: "Walloon", nativeName: "Walon" },
+    { code: "wo", name: "Wolof", nativeName: "Wollof" },
+    { code: "xh", name: "Xhosa", nativeName: "isiXhosa" },
+    { code: "yi", name: "Yiddish", nativeName: "ייִדיש" },
+    { code: "yo", name: "Yoruba", nativeName: "Yorùbá" },
+    { code: "za", name: "Zhuang", nativeName: "Saɯ cueŋƅ" },
+    { code: "zh", name: "Chinese", nativeName: "中文" },
+    { code: "zu", name: "Zulu", nativeName: "isiZulu" }
+];
 
 // Validation functions
 function validateChallengeName(name) {
@@ -343,6 +531,440 @@ function validateNoDuplicates(formData) {
     return { valid: true };
 }
 
+// Translation helper functions
+function createLanguageSelect(selectedLang = '') {
+    let options = '<option value="">Select Language...</option>';
+    
+    // Priority languages in specific order
+    const priorityCodes = ['da', 'en', 'de', 'es', 'pt'];
+    const priorityLangs = [];
+    const otherLangs = [];
+    
+    LANGUAGES.forEach(lang => {
+        if (priorityCodes.includes(lang.code)) {
+            priorityLangs.push(lang);
+        } else {
+            otherLangs.push(lang);
+        }
+    });
+    
+    // Sort priority languages by the priority order
+    priorityLangs.sort((a, b) => priorityCodes.indexOf(a.code) - priorityCodes.indexOf(b.code));
+    
+    // Sort other languages alphabetically by name
+    otherLangs.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Combine both lists
+    const sortedLanguages = [...priorityLangs, ...otherLangs];
+    
+    sortedLanguages.forEach(lang => {
+        const selected = lang.code === selectedLang ? 'selected' : '';
+        const safeLangCode = escapeHtml(lang.code);
+        const safeLangName = escapeHtml(lang.name);
+        const safeNativeName = escapeHtml(lang.nativeName);
+        options += `<option value="${safeLangCode}" ${selected}>${safeLangName} (${safeNativeName}) - ${safeLangCode}</option>`;
+    });
+    return options;
+}
+
+function addImageTranslation(instanceId) {
+    const sanitizedId = String(instanceId).replace(/[^0-9]/g, '');
+    const translationsContainer = document.getElementById(`image-translations-${sanitizedId}`);
+    if (!translationsContainer) return;
+    
+    translationCounter++;
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'translation-entry';
+    translationDiv.id = `image-translation-${translationCounter}`;
+    translationDiv.setAttribute('data-instance-id', sanitizedId);
+    
+    const safeTranslationCounter = escapeHtml(String(translationCounter));
+    const safeInstanceId = escapeHtml(String(instanceId));
+    
+    translationDiv.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; min-width: 150px;">
+                <label>Language *</label>
+                <select class="image-translation-lang" required onchange="updateImageTranslationValue(${safeTranslationCounter}, ${safeInstanceId}); checkDuplicateLanguages(${sanitizedId}, 'image')">
+                    ${createLanguageSelect()}
+                </select>
+            </div>
+            <div style="flex: 2; min-width: 250px;">
+                <label>Translated Image Tag *</label>
+                <input type="text" class="image-translation-value" placeholder="Select a language to auto-generate" required disabled>
+            </div>
+            <button type="button" class="btn remove-btn" onclick="removeImageTranslation(${safeTranslationCounter}, ${sanitizedId})">Remove</button>
+        </div>
+    `;
+    
+    translationsContainer.appendChild(translationDiv);
+}
+
+function updateImageTranslationValue(translationId, instanceId) {
+    const translationEntry = document.getElementById(`image-translation-${translationId}`);
+    if (!translationEntry) return;
+    
+    const langSelect = translationEntry.querySelector('.image-translation-lang');
+    const valueInput = translationEntry.querySelector('.image-translation-value');
+    const instanceCard = document.getElementById(`instance-${instanceId}`);
+    
+    if (!langSelect || !valueInput || !instanceCard) return;
+    
+    const langCode = langSelect.value;
+    if (!langCode) {
+        valueInput.value = '';
+        return;
+    }
+    
+    // Get the base image from the instance
+    const baseImageInput = instanceCard.querySelector('.instance-image');
+    if (baseImageInput && baseImageInput.value) {
+        let baseImage = baseImageInput.value.trim();
+        // Remove prefix if present
+        if (baseImage.startsWith('ghcr.io/campfire-security/')) {
+            baseImage = baseImage.replace('ghcr.io/campfire-security/', '');
+        }
+        // Append language code
+        valueInput.value = `${baseImage}-${langCode}`;
+    }
+}
+
+function removeImageTranslation(translationId, instanceId) {
+    const sanitizedTranslationId = String(translationId).replace(/[^0-9]/g, '');
+    const sanitizedInstanceId = String(instanceId).replace(/[^0-9]/g, '');
+    const translation = document.getElementById(`image-translation-${sanitizedTranslationId}`);
+    if (translation) {
+        translation.remove();
+        checkDuplicateLanguages(sanitizedInstanceId, 'image');
+    }
+}
+
+function addTdTranslation(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const translationsContainer = document.getElementById(`td-translations-${sanitizedId}`);
+    if (!translationsContainer) return;
+    
+    translationCounter++;
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'translation-entry';
+    translationDiv.id = `td-translation-${translationCounter}`;
+    translationDiv.setAttribute('data-flag-id', sanitizedId);
+    
+    const safeTranslationCounter = escapeHtml(String(translationCounter));
+    
+    translationDiv.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 15px;">
+            <div style="flex: 1; min-width: 150px;">
+                <label>Language *</label>
+                <select class="td-translation-lang" required onchange="checkDuplicateLanguages(${sanitizedId}, 'td')">
+                    ${createLanguageSelect()}
+                </select>
+            </div>
+            <div style="flex: 3; min-width: 300px;">
+                <label>Translated Description *</label>
+                <textarea class="td-translation-value" rows="3" placeholder="Translated challenge description..." required></textarea>
+            </div>
+            <button type="button" class="btn remove-btn" onclick="removeTdTranslation(${safeTranslationCounter}, ${sanitizedId})" style="margin-top: 23px;">Remove</button>
+        </div>
+    `;
+    
+    translationsContainer.appendChild(translationDiv);
+}
+
+function removeTdTranslation(translationId, flagId) {
+    const sanitizedTranslationId = String(translationId).replace(/[^0-9]/g, '');
+    const sanitizedFlagId = String(flagId).replace(/[^0-9]/g, '');
+    const translation = document.getElementById(`td-translation-${sanitizedTranslationId}`);
+    if (translation) {
+        translation.remove();
+        checkDuplicateLanguages(sanitizedFlagId, 'td');
+    }
+}
+
+function addNameTranslation(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const translationsContainer = document.getElementById(`name-translations-${sanitizedId}`);
+    if (!translationsContainer) return;
+    
+    translationCounter++;
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'translation-entry';
+    translationDiv.id = `name-translation-${translationCounter}`;
+    translationDiv.setAttribute('data-flag-id', sanitizedId);
+    
+    const safeTranslationCounter = escapeHtml(String(translationCounter));
+    
+    translationDiv.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 15px;">
+            <div style="flex: 1; min-width: 150px;">
+                <label>Language *</label>
+                <select class="name-translation-lang" required onchange="checkDuplicateLanguages(${sanitizedId}, 'name')">
+                    ${createLanguageSelect()}
+                </select>
+            </div>
+            <div style="flex: 3; min-width: 300px;">
+                <label>Translated Name *</label>
+                <input type="text" class="name-translation-value" placeholder="Translated challenge name..." required>
+            </div>
+            <button type="button" class="btn remove-btn" onclick="removeNameTranslation(${safeTranslationCounter}, ${sanitizedId})" style="margin-top: 23px;">Remove</button>
+        </div>
+    `;
+    
+    translationsContainer.appendChild(translationDiv);
+}
+
+function removeNameTranslation(translationId, flagId) {
+    const sanitizedTranslationId = String(translationId).replace(/[^0-9]/g, '');
+    const sanitizedFlagId = String(flagId).replace(/[^0-9]/g, '');
+    const translation = document.getElementById(`name-translation-${sanitizedTranslationId}`);
+    if (translation) {
+        translation.remove();
+        checkDuplicateLanguages(sanitizedFlagId, 'name');
+    }
+}
+
+function addMcTranslation(flagId) {
+    const sanitizedId = String(flagId).replace(/[^0-9]/g, '');
+    const flagEntry = document.getElementById(`flag-${sanitizedId}`);
+    if (!flagEntry) return;
+    
+    const translationsContainer = document.getElementById(`mc-translations-${sanitizedId}`);
+    if (!translationsContainer) return;
+    
+    // Get the original answers to create matching translation structure
+    const originalAnswersContainer = document.getElementById(`mc-answers-${sanitizedId}`);
+    if (!originalAnswersContainer) return;
+    
+    const originalAnswers = originalAnswersContainer.querySelectorAll('.mc-answer-entry');
+    if (originalAnswers.length < 2) {
+        showAlert('Please add at least 2 answers to the original multiple choice before adding translations', 'Missing Answers');
+        return;
+    }
+    
+    translationCounter++;
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'mc-translation-entry';
+    translationDiv.id = `mc-translation-${translationCounter}`;
+    translationDiv.setAttribute('data-flag-id', sanitizedId);
+    
+    const safeTranslationCounter = escapeHtml(String(translationCounter));
+    
+    // Build answer translation fields
+    let answerFields = '';
+    originalAnswers.forEach((answerEntry, index) => {
+        const key = `answer-${index + 1}`;
+        const isCorrect = answerEntry.querySelector('.answer-correct').checked;
+        const correctLabel = isCorrect ? ' ✓ (correct)' : '';
+        answerFields += `
+            <div class="form-group" data-answer-key="${key}" style="margin-bottom: 10px;">
+                <label>Translated Answer ${index + 1}${correctLabel} *</label>
+                <input type="text" class="mc-translation-answer-${index + 1}" placeholder="Translated answer ${index + 1}..." required>
+            </div>
+        `;
+    });
+    
+    translationDiv.innerHTML = `
+        <div style="background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #475569;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="flex: 1; min-width: 150px; margin-right: 10px;">
+                    <label>Language *</label>
+                    <select class="mc-translation-lang" required onchange="checkDuplicateLanguages(${sanitizedId}, 'mc')">
+                        ${createLanguageSelect()}
+                    </select>
+                </div>
+                <button type="button" class="btn remove-btn" onclick="removeMcTranslation(${safeTranslationCounter}, ${sanitizedId})">Remove Translation</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Translated Wrong Answers Feedback *</label>
+                <textarea class="mc-translation-wrong-feedback" rows="2" placeholder="Translated wrong feedback..." required></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Translated Correct Answer Explanation *</label>
+                <textarea class="mc-translation-correct-explanation" rows="2" placeholder="Translated correct explanation..." required></textarea>
+            </div>
+            <div>
+                <h5 style="color: #ff6b35; margin-bottom: 10px;">Translated Answers</h5>
+                <div id="mc-translation-answers-${safeTranslationCounter}">
+                    ${answerFields}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    translationsContainer.appendChild(translationDiv);
+}
+
+function removeMcTranslation(translationId, flagId) {
+    const sanitizedTranslationId = String(translationId).replace(/[^0-9]/g, '');
+    const sanitizedFlagId = String(flagId).replace(/[^0-9]/g, '');
+    const translation = document.getElementById(`mc-translation-${sanitizedTranslationId}`);
+    if (translation) {
+        translation.remove();
+        checkDuplicateLanguages(sanitizedFlagId, 'mc');
+    }
+}
+
+function checkDuplicateLanguages(entityId, type) {
+    // Check for duplicate language selections
+    const sanitizedId = String(entityId).replace(/[^0-9]/g, '');
+    let selector, container;
+    
+    if (type === 'image') {
+        selector = `#image-translations-${sanitizedId} .image-translation-lang`;
+        container = document.getElementById(`image-translations-${sanitizedId}`);
+    } else if (type === 'td') {
+        selector = `#td-translations-${sanitizedId} .td-translation-lang`;
+        container = document.getElementById(`td-translations-${sanitizedId}`);
+    } else if (type === 'mc') {
+        selector = `#mc-translations-${sanitizedId} .mc-translation-lang`;
+        container = document.getElementById(`mc-translations-${sanitizedId}`);
+    } else if (type === 'name') {
+        selector = `#name-translations-${sanitizedId} .name-translation-lang`;
+        container = document.getElementById(`name-translations-${sanitizedId}`);
+    }
+    
+    if (!container) return;
+    
+    const langSelects = container.querySelectorAll(selector);
+    const selectedLangs = new Set();
+    let hasDuplicate = false;
+    
+    langSelects.forEach(select => {
+        select.style.borderColor = '';
+        const value = select.value;
+        if (value && selectedLangs.has(value)) {
+            select.style.borderColor = '#ef4444';
+            hasDuplicate = true;
+        } else if (value) {
+            selectedLangs.add(value);
+        }
+    });
+    
+    return !hasDuplicate;
+}
+
+function validateTranslations(formData) {
+    const errors = [];
+    
+    // Validate instance image translations
+    if (!formData.static) {
+        formData.instances.forEach((instance, idx) => {
+            if (instance.imageByLanguage) {
+                // Check for duplicate languages
+                const langs = Object.keys(instance.imageByLanguage);
+                const uniqueLangs = new Set(langs);
+                if (langs.length !== uniqueLangs.size) {
+                    errors.push(`Service ${idx + 1}: Duplicate language codes found in image translations`);
+                }
+                
+                // Check that all translations have values
+                for (const [lang, value] of Object.entries(instance.imageByLanguage)) {
+                    if (!value || value.trim().length === 0) {
+                        errors.push(`Service ${idx + 1}: Translation for language '${lang}' is empty`);
+                    }
+                }
+            }
+        });
+    }
+    
+    // Validate flag translations
+    if (formData.flags) {
+        formData.flags.forEach((flag, flagIdx) => {
+            const flagNum = flagIdx + 1;
+            
+            // Validate name translations
+            if (flag.nameByLanguage) {
+                const nameLangs = Object.keys(flag.nameByLanguage);
+                const uniqueNameLangs = new Set(nameLangs);
+                if (nameLangs.length !== uniqueNameLangs.size) {
+                    errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in name translations`);
+                }
+                
+                for (const [lang, value] of Object.entries(flag.nameByLanguage)) {
+                    if (!value || value.trim().length === 0) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' name is empty`);
+                    }
+                }
+            }
+            
+            // Validate TD translations
+            if (flag.tdByLanguage) {
+                const tdLangs = Object.keys(flag.tdByLanguage);
+                const uniqueTdLangs = new Set(tdLangs);
+                if (tdLangs.length !== uniqueTdLangs.size) {
+                    errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in description translations`);
+                }
+                
+                for (const [lang, value] of Object.entries(flag.tdByLanguage)) {
+                    if (!value || value.trim().length === 0) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' description is empty`);
+                    }
+                }
+            }
+            
+            // Validate multiple choice translations
+            if (flag.multipleChoiceByLanguage && flag.multipleChoice) {
+                const mcLangs = Object.keys(flag.multipleChoiceByLanguage);
+                const uniqueMcLangs = new Set(mcLangs);
+                if (mcLangs.length !== uniqueMcLangs.size) {
+                    errors.push(`Flag ${flagNum} (${flag.tag}): Duplicate language codes found in multiple choice translations`);
+                }
+                
+                // Get original answer keys
+                const originalAnswerKeys = Object.keys(flag.multipleChoice.answers);
+                const originalAnswerCount = originalAnswerKeys.length;
+                
+                for (const [lang, mcData] of Object.entries(flag.multipleChoiceByLanguage)) {
+                    // Check required fields
+                    if (!mcData.wrongAnswersFeedback || mcData.wrongAnswersFeedback.trim().length === 0) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' is missing wrong answers feedback`);
+                    }
+                    if (!mcData.correctAnswerExplanation || mcData.correctAnswerExplanation.trim().length === 0) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' is missing correct answer explanation`);
+                    }
+                    
+                    // Check that all answers are translated
+                    const translatedAnswerKeys = Object.keys(mcData.answers);
+                    if (translatedAnswerKeys.length !== originalAnswerCount) {
+                        errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' has ${translatedAnswerKeys.length} answers but original has ${originalAnswerCount}`);
+                    }
+                    
+                    // Check that answer keys match
+                    for (const originalKey of originalAnswerKeys) {
+                        if (!mcData.answers[originalKey]) {
+                            errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' is missing answer '${originalKey}'`);
+                        } else {
+                            // Check that answer text is not empty
+                            if (!mcData.answers[originalKey].answerText || mcData.answers[originalKey].answerText.trim().length === 0) {
+                                errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' has empty text for answer '${originalKey}'`);
+                            }
+                            
+                            // Check that correctness matches original
+                            const originalCorrect = flag.multipleChoice.answers[originalKey].correct;
+                            const translatedCorrect = mcData.answers[originalKey].correct;
+                            if (originalCorrect !== translatedCorrect) {
+                                errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' answer '${originalKey}' correctness (${translatedCorrect}) doesn't match original (${originalCorrect})`);
+                            }
+                        }
+                    }
+                    
+                    // Check for extra answers in translation
+                    for (const translatedKey of translatedAnswerKeys) {
+                        if (!originalAnswerKeys.includes(translatedKey)) {
+                            errors.push(`Flag ${flagNum} (${flag.tag}): Translation for language '${lang}' has extra answer '${translatedKey}' not in original`);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    if (errors.length > 0) {
+        return { valid: false, error: errors.join('\n') };
+    }
+    return { valid: true };
+}
+
 function updateTagPreview() {
     const category = sanitizeForText(document.getElementById('category').value);
     const tag = sanitizeForText(document.getElementById('tag').value);
@@ -444,9 +1066,33 @@ function addInstance() {
             ${createLabelWithInfo('DNS Name *', dnsHelp)}
             <input type="text" class="dns-name" data-instance-id="${safeInstanceCounter}" placeholder="service1.cfire" ${requiredAttr} pattern="[a-z0-9.\-]+\.cfire$">
         </div>
+        <div class="form-group translation-section" ${staticAttr}>
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('image-translations-section-${safeInstanceCounter}', this)">
+                + Image Translations (Optional)
+            </button>
+            <div id="image-translations-section-${safeInstanceCounter}" class="translation-container" style="display: none;">
+                <div id="image-translations-${safeInstanceCounter}" class="translations-list">
+                    <!-- Image translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addImageTranslation(${safeInstanceCounter})">+ Add Translation</button>
+            </div>
+        </div>
     `;
 
     container.appendChild(instanceDiv);
+}
+
+function toggleTranslationSection(sectionId, button) {
+    const section = document.getElementById(sectionId);
+    if (section && button) {
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            button.textContent = button.textContent.replace('+', '−');
+        } else {
+            section.style.display = 'none';
+            button.textContent = button.textContent.replace('−', '+');
+        }
+    }
 }
 
 function updateAllInstancesForStatic() {
@@ -487,6 +1133,11 @@ function updateAllInstancesForStatic() {
             if (removeButton) {
                 removeButton.style.display = 'none';
             }
+            // Hide translation section for static challenges
+            const translationSection = firstCard.querySelector('.translation-section');
+            if (translationSection) {
+                translationSection.style.display = 'none';
+            }
         }
 
         // Hide the "Add Service" button when static
@@ -501,6 +1152,7 @@ function updateAllInstancesForStatic() {
             const dnsGroup = dnsInput ? dnsInput.closest('.form-group') : null;
             const removeButton = card.querySelector('.btn-danger');
             const nameSlug = getChallengeNameSlug();
+            const instanceId = card.id.replace('instance-', '');
 
             if (imageInput) {
                 const safeNameSlug = sanitizeForAttribute(nameSlug);
@@ -517,6 +1169,30 @@ function updateAllInstancesForStatic() {
             // Show remove button for non-static services
             if (removeButton) {
                 removeButton.style.display = 'inline-block';
+            }
+            
+            // Add translation section if it doesn't exist
+            if (!card.querySelector('.translation-section')) {
+                const translationSection = document.createElement('div');
+                translationSection.className = 'form-group translation-section';
+                translationSection.innerHTML = `
+                    <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('image-translations-section-${instanceId}', this)">
+                        + Image Translations (Optional)
+                    </button>
+                    <div id="image-translations-section-${instanceId}" class="translation-container" style="display: none;">
+                        <div id="image-translations-${instanceId}" class="translations-list">
+                            <!-- Image translations will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addImageTranslation(${instanceId})">+ Add Translation</button>
+                    </div>
+                `;
+                card.appendChild(translationSection);
+            } else {
+                // Show existing translation section
+                const translationSection = card.querySelector('.translation-section');
+                if (translationSection) {
+                    translationSection.style.display = 'block';
+                }
             }
         });
 
@@ -584,22 +1260,36 @@ function addFlag() {
 
     flagDiv.innerHTML = `
         <div class="form-group">
-            ${createLabelWithInfo('Flag Tag *', 'Lowercase letters, numbers, hyphens, and underscores only')}
+            ${createLabelWithInfo('Challenge Tag *', 'Lowercase letters, numbers, hyphens, and underscores only')}
             <input type="text" class="flag-tag" placeholder="challenge-template-1" required pattern="[a-z0-9\-_]+">
         </div>
         <div class="form-group">
-            ${createLabelWithInfo('Flag Name *', 'Display name shown on the platform')}
+            ${createLabelWithInfo('Challenge Name *', 'Display name shown on the platform')}
             <input type="text" class="flag-name" placeholder="Challenge name" required>
         </div>
+        
+        <!-- Name Translation Section -->
+        <div class="form-group translation-section" style="flex-basis: 100%;">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('name-translations-section-${safeFlagCounter}', this)">
+                + Name Translations (Optional)
+            </button>
+            <div id="name-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
+                <div id="name-translations-${safeFlagCounter}" class="translations-list">
+                    <!-- Name translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addNameTranslation(${safeFlagCounter})">+ Add Translation</button>
+            </div>
+        </div>
+        
         <div class="form-group">
-            ${createLabelWithInfo('Flag Type *', 'Choose between a static flag value or multiple choice quiz')}
+            ${createLabelWithInfo('Challenge Type *', 'Choose between a static challenge value or multiple choice quiz')}
             <select class="flag-type" required onchange="toggleFlagType(${safeFlagCounter})">
-                <option value="static" selected>Static Flag</option>
+                <option value="static" selected>Static Challenge</option>
                 <option value="multipleChoice">Multiple Choice</option>
             </select>
         </div>
         
-        <!-- Static Flag Fields -->
+        <!-- Static Challenge Fields -->
         <div class="static-flag-fields" id="static-flag-${safeFlagCounter}">
             <div class="form-group">
                 ${createLabelWithInfo('Static Flag Value *', 'Must be FIRE{...} or DDC{...} format with 6-50 characters inside braces. Allowed characters: letters (a-z, A-Z), numbers (0-9), hyphens (-), underscores (_).\\n\\nExample flags:\\n\\n• FIRE{flag_here_in_1337speak}\\n• DDC{h4nds_up_7h1s_15_4_r0pp3ry}\\n• FIRE{771b2f7a-d8f2-48f9-856e-70a83c9dd65c}')}
@@ -626,6 +1316,19 @@ function addFlag() {
             </div>
         </div>
         
+        <!-- MC Translation Section -->
+        <div class="form-group translation-section" id="mc-translation-section-${safeFlagCounter}" style="display: none; flex-basis: 100%; margin-top: 20px;">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('mc-translations-section-${safeFlagCounter}', this)">
+                + Multiple Choice Translations (Optional)
+            </button>
+            <div id="mc-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
+                <div id="mc-translations-${safeFlagCounter}" class="translations-list">
+                    <!-- MC translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addMcTranslation(${safeFlagCounter})">+ Add Translation</button>
+            </div>
+        </div>
+        
         <div class="form-group">
             ${createLabelWithInfo('Points *', 'Points awarded for capturing this flag')}
             <input type="number" class="flag-points" value="20" placeholder="20" min="0" required>
@@ -645,9 +1348,23 @@ function addFlag() {
             </select>
         </div>
         <div class="form-group" style="flex-basis: 100%;">
-            ${createLabelWithInfo('Flag Description (TD) *', 'Description formatted in markdown. For static challenges, include links to handouts along with SHA256 checksums for verification.')}
+            ${createLabelWithInfo('Challenge description (TD) *', 'Description formatted in markdown. For static challenges, include links to handouts along with SHA256 checksums for verification.')}
             <textarea class="flag-td" rows="4" placeholder="Challenge description goes here in markdown format." required></textarea>
         </div>
+        
+        <!-- TD Translation Section -->
+        <div class="form-group translation-section" style="flex-basis: 100%;">
+            <button type="button" class="btn btn-secondary translation-toggle" onclick="toggleTranslationSection('td-translations-section-${safeFlagCounter}', this)">
+                + Description Translations (Optional)
+            </button>
+            <div id="td-translations-section-${safeFlagCounter}" class="translation-container" style="display: none;">
+                <div id="td-translations-${safeFlagCounter}" class="translations-list">
+                    <!-- TD translations will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addTdTranslation(${safeFlagCounter})">+ Add Translation</button>
+            </div>
+        </div>
+        
         <button type="button" class="btn remove-btn" onclick="removeFlag(${safeFlagCounter})" style="align-self: flex-start;">Remove</button>
     `;
 
@@ -675,6 +1392,7 @@ function toggleFlagType(flagId) {
     const flagTypeSelect = flagEntry.querySelector('.flag-type');
     const staticFields = flagEntry.querySelector(`#static-flag-${sanitizedId}`);
     const mcFields = flagEntry.querySelector(`#mc-flag-${sanitizedId}`);
+    const mcTranslationSection = flagEntry.querySelector(`#mc-translation-section-${sanitizedId}`);
     const staticInput = flagEntry.querySelector('.flag-static');
     const mcWrongFeedback = flagEntry.querySelector('.mc-wrong-feedback');
     const mcCorrectAnswerExplanation = flagEntry.querySelector('.mc-correct-answer-explanation');
@@ -683,6 +1401,7 @@ function toggleFlagType(flagId) {
         // Show multiple choice, hide static
         staticFields.style.display = 'none';
         mcFields.style.display = 'flex';
+        if (mcTranslationSection) mcTranslationSection.style.display = 'block';
         if (staticInput) staticInput.removeAttribute('required');
         if (mcWrongFeedback) mcWrongFeedback.setAttribute('required', 'required');
         if (mcCorrectAnswerExplanation) mcCorrectAnswerExplanation.setAttribute('required', 'required');
@@ -697,6 +1416,7 @@ function toggleFlagType(flagId) {
         // Show static, hide multiple choice
         staticFields.style.display = 'block';
         mcFields.style.display = 'none';
+        if (mcTranslationSection) mcTranslationSection.style.display = 'none';
         if (staticInput) staticInput.setAttribute('required', 'required');
         if (mcWrongFeedback) mcWrongFeedback.removeAttribute('required');
         if (mcCorrectAnswerExplanation) mcCorrectAnswerExplanation.removeAttribute('required');
@@ -746,6 +1466,26 @@ function addAnswerToFlag(flagId) {
     `;
     
     answersContainer.appendChild(answerDiv);
+    
+    // Also add corresponding answer field to all existing translations
+    const translationsContainer = document.getElementById(`mc-translations-${sanitizedId}`);
+    if (translationsContainer) {
+        const translations = translationsContainer.querySelectorAll('.mc-translation-entry');
+        translations.forEach(translationEntry => {
+            // Find the translated answers container within this translation
+            const translatedAnswersDiv = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+            if (translatedAnswersDiv) {
+                const newAnswerField = document.createElement('div');
+                newAnswerField.className = 'form-group';
+                newAnswerField.setAttribute('data-answer-key', answerKey);
+                newAnswerField.innerHTML = `
+                    <label>Translated Answer ${nextKeyIndex} *</label>
+                    <input type="text" class="mc-translation-answer-${nextKeyIndex}" placeholder="Translated answer ${nextKeyIndex}..." required>
+                `;
+                translatedAnswersDiv.appendChild(newAnswerField);
+            }
+        });
+    }
 }
 
 function removeAnswerFromFlag(answerId, flagId) {
@@ -764,13 +1504,47 @@ function removeAnswerFromFlag(answerId, flagId) {
     
     const answer = document.getElementById(`answer-${sanitizedAnswerId}`);
     if (answer) {
+        const answerKey = answer.getAttribute('data-answer-key');
         answer.remove();
+        
         // Reindex remaining answers
         const remainingAnswers = answersContainer.querySelectorAll('.mc-answer-entry');
         remainingAnswers.forEach((answerEntry, index) => {
             const newKey = `answer-${index + 1}`;
             answerEntry.setAttribute('data-answer-key', newKey);
         });
+        
+        // Also remove and reindex translation answer fields
+        const translationsContainer = document.getElementById(`mc-translations-${sanitizedFlagId}`);
+        if (translationsContainer) {
+            const translations = translationsContainer.querySelectorAll('.mc-translation-entry');
+            translations.forEach(translationEntry => {
+                const translatedAnswersDiv = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+                if (translatedAnswersDiv) {
+                    // Remove the answer field with matching data-answer-key
+                    const answerFieldToRemove = translatedAnswersDiv.querySelector(`[data-answer-key="${answerKey}"]`);
+                    if (answerFieldToRemove) {
+                        answerFieldToRemove.remove();
+                    }
+                    
+                    // Reindex remaining answer fields
+                    const remainingFields = translatedAnswersDiv.querySelectorAll('.form-group[data-answer-key]');
+                    remainingFields.forEach((field, index) => {
+                        const newKey = `answer-${index + 1}`;
+                        field.setAttribute('data-answer-key', newKey);
+                        
+                        const label = field.querySelector('label');
+                        if (label) label.textContent = `Translated Answer ${index + 1} *`;
+                        
+                        const input = field.querySelector('input');
+                        if (input) {
+                            input.className = `mc-translation-answer-${index + 1}`;
+                            input.placeholder = `Translated answer ${index + 1}...`;
+                        }
+                    });
+                }
+            });
+        }
     }
 }
 
@@ -817,6 +1591,27 @@ function collectFormData() {
                     });
                 }
             }
+            
+            // Collect image translations (only for non-static)
+            const instanceId = card.id.replace('instance-', '');
+            const imageTranslationsContainer = card.querySelector(`#image-translations-${instanceId}`);
+            if (imageTranslationsContainer) {
+                const imageTranslations = imageTranslationsContainer.querySelectorAll('.translation-entry');
+                if (imageTranslations.length > 0) {
+                    instance.imageByLanguage = {};
+                    imageTranslations.forEach(translationEntry => {
+                        const lang = sanitizeForYaml(translationEntry.querySelector('.image-translation-lang').value.trim());
+                        let translationValue = sanitizeForYaml(translationEntry.querySelector('.image-translation-value').value.trim());
+                        if (lang && translationValue) {
+                            // Remove prefix if user included it
+                            if (translationValue.startsWith('ghcr.io/campfire-security/')) {
+                                translationValue = translationValue.replace('ghcr.io/campfire-security/', '');
+                            }
+                            instance.imageByLanguage[lang] = translationValue;
+                        }
+                    });
+                }
+            }
         }
 
         formData.instances.push(instance);
@@ -829,6 +1624,7 @@ function collectFormData() {
         const tag = sanitizeForYaml(flagEntry.querySelector('.flag-tag').value.trim());
         if (tag) {
             const flagType = flagEntry.querySelector('.flag-type').value;
+            const flagId = flagEntry.id.replace('flag-', '');
             const flag = {
                 tag: tag,
                 name: sanitizeForYaml(flagEntry.querySelector('.flag-name').value),
@@ -836,6 +1632,38 @@ function collectFormData() {
                 category: sanitizeForYaml(flagEntry.querySelector('.flag-category').value),
                 td: sanitizeForYaml(flagEntry.querySelector('.flag-td').value)
             };
+            
+            // Collect name translations
+            const nameTranslationsContainer = flagEntry.querySelector(`#name-translations-${flagId}`);
+            if (nameTranslationsContainer) {
+                const nameTranslations = nameTranslationsContainer.querySelectorAll('.translation-entry');
+                if (nameTranslations.length > 0) {
+                    flag.nameByLanguage = {};
+                    nameTranslations.forEach(translationEntry => {
+                        const lang = sanitizeForYaml(translationEntry.querySelector('.name-translation-lang').value.trim());
+                        const translationValue = sanitizeForYaml(translationEntry.querySelector('.name-translation-value').value.trim());
+                        if (lang && translationValue) {
+                            flag.nameByLanguage[lang] = translationValue;
+                        }
+                    });
+                }
+            }
+            
+            // Collect TD translations
+            const tdTranslationsContainer = flagEntry.querySelector(`#td-translations-${flagId}`);
+            if (tdTranslationsContainer) {
+                const tdTranslations = tdTranslationsContainer.querySelectorAll('.translation-entry');
+                if (tdTranslations.length > 0) {
+                    flag.tdByLanguage = {};
+                    tdTranslations.forEach(translationEntry => {
+                        const lang = sanitizeForYaml(translationEntry.querySelector('.td-translation-lang').value.trim());
+                        const translationValue = sanitizeForYaml(translationEntry.querySelector('.td-translation-value').value.trim());
+                        if (lang && translationValue) {
+                            flag.tdByLanguage[lang] = translationValue;
+                        }
+                    });
+                }
+            }
             
             if (flagType === 'multipleChoice') {
                 // Collect multiple choice data for this flag
@@ -860,6 +1688,51 @@ function collectFormData() {
                             };
                         }
                     });
+                }
+                
+                // Collect MC translations
+                const mcTranslationsContainer = flagEntry.querySelector(`#mc-translations-${flagId}`);
+                if (mcTranslationsContainer) {
+                    const mcTranslations = mcTranslationsContainer.querySelectorAll('.mc-translation-entry');
+                    if (mcTranslations.length > 0) {
+                        flag.multipleChoiceByLanguage = {};
+                        mcTranslations.forEach(translationEntry => {
+                            const lang = sanitizeForYaml(translationEntry.querySelector('.mc-translation-lang').value.trim());
+                            if (lang) {
+                                const wrongFeedback = sanitizeForYaml(translationEntry.querySelector('.mc-translation-wrong-feedback').value.trim());
+                                const correctExplanation = sanitizeForYaml(translationEntry.querySelector('.mc-translation-correct-explanation').value.trim());
+                                
+                                if (wrongFeedback && correctExplanation) {
+                                    flag.multipleChoiceByLanguage[lang] = {
+                                        wrongAnswersFeedback: wrongFeedback,
+                                        correctAnswerExplanation: correctExplanation,
+                                        answers: {}
+                                    };
+                                    
+                                    // Collect translated answers
+                                    const translatedAnswersContainer = translationEntry.querySelector('[id^="mc-translation-answers-"]');
+                                    if (translatedAnswersContainer) {
+                                        const answerFields = translatedAnswersContainer.querySelectorAll('.form-group[data-answer-key]');
+                                        answerFields.forEach(answerField => {
+                                            const answerKey = answerField.getAttribute('data-answer-key');
+                                            const answerInput = answerField.querySelector('input');
+                                            const answerText = answerInput ? sanitizeForYaml(answerInput.value.trim()) : '';
+                                            if (answerKey && answerText) {
+                                                // Get the correctness from the original answer
+                                                const originalAnswer = answersContainer.querySelector(`.mc-answer-entry[data-answer-key="${answerKey}"]`);
+                                                const isCorrect = originalAnswer ? originalAnswer.querySelector('.answer-correct').checked : false;
+                                                
+                                                flag.multipleChoiceByLanguage[lang].answers[answerKey] = {
+                                                    answerText: answerText,
+                                                    correct: isCorrect
+                                                };
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
             } else {
                 // Static flag
@@ -922,6 +1795,14 @@ function generateYamlFromData(formData) {
                     image: `ghcr.io/campfire-security/${imageSuffix}`
                 };
 
+                // Add imageByLanguage if present
+                if (instanceData.imageByLanguage && Object.keys(instanceData.imageByLanguage).length > 0) {
+                    instance.imageByLanguage = {};
+                    for (const [lang, imageValue] of Object.entries(instanceData.imageByLanguage)) {
+                        instance.imageByLanguage[lang] = `ghcr.io/campfire-security/${imageValue}`;
+                    }
+                }
+
                 // Process DNS entry (only one per service) - only add if DNS is provided
                 if (instanceData.dns && instanceData.dns.length > 0) {
                     const dnsEntry = instanceData.dns[0];
@@ -949,6 +1830,22 @@ function generateYamlFromData(formData) {
                     td: sanitizeForYaml(flagData.td)
                 };
                 
+                // Add nameByLanguage if present
+                if (flagData.nameByLanguage && Object.keys(flagData.nameByLanguage).length > 0) {
+                    flag.nameByLanguage = {};
+                    for (const [lang, nameValue] of Object.entries(flagData.nameByLanguage)) {
+                        flag.nameByLanguage[lang] = sanitizeForYaml(nameValue);
+                    }
+                }
+                
+                // Add tdByLanguage if present
+                if (flagData.tdByLanguage && Object.keys(flagData.tdByLanguage).length > 0) {
+                    flag.tdByLanguage = {};
+                    for (const [lang, tdValue] of Object.entries(flagData.tdByLanguage)) {
+                        flag.tdByLanguage[lang] = sanitizeForYaml(tdValue);
+                    }
+                }
+                
                 // Add either static flag or multipleChoice
                 if (flagData.multipleChoice) {
                     flag.multipleChoice = {
@@ -962,6 +1859,25 @@ function generateYamlFromData(formData) {
                             answerText: sanitizeForYaml(value.answerText),
                             correct: value.correct
                         };
+                    }
+                    
+                    // Add multipleChoiceByLanguage if present
+                    if (flagData.multipleChoiceByLanguage && Object.keys(flagData.multipleChoiceByLanguage).length > 0) {
+                        flag.multipleChoiceByLanguage = {};
+                        for (const [lang, mcData] of Object.entries(flagData.multipleChoiceByLanguage)) {
+                            flag.multipleChoiceByLanguage[lang] = {
+                                wrongAnswersFeedback: sanitizeForYaml(mcData.wrongAnswersFeedback),
+                                correctAnswerExplanation: sanitizeForYaml(mcData.correctAnswerExplanation),
+                                answers: {}
+                            };
+                            
+                            for (const [answerKey, answerValue] of Object.entries(mcData.answers)) {
+                                flag.multipleChoiceByLanguage[lang].answers[answerKey] = {
+                                    answerText: sanitizeForYaml(answerValue.answerText),
+                                    correct: answerValue.correct
+                                };
+                            }
+                        }
                     }
                 } else {
                     flag.static = sanitizeForYaml(flagData.static);
@@ -1114,6 +2030,13 @@ function previewYaml() {
         return;
     }
 
+    // Validate translations
+    const translationValidation = validateTranslations(formData);
+    if (!translationValidation.valid) {
+        showAlert(translationValidation.error, 'Translation Validation Error');
+        return;
+    }
+
     try {
         const yaml = generateYamlFromData(formData);
         previewYamlData = formData;
@@ -1231,6 +2154,13 @@ function generateYaml() {
     const duplicateValidation = validateNoDuplicates(formData);
     if (!duplicateValidation.valid) {
         showAlert(duplicateValidation.error, 'Duplicate Values Found');
+        return;
+    }
+
+    // Validate translations
+    const translationValidation = validateTranslations(formData);
+    if (!translationValidation.valid) {
+        showAlert(translationValidation.error, 'Translation Validation Error');
         return;
     }
 

@@ -22,13 +22,13 @@
                 <h2>Basic Information</h2>
                 <div class="form-group">
                     <label for="name">
-                        Challenge Name *
+                        Exercise name *
                         <span class="info-icon" onclick="this.classList.toggle('active')" onmouseleave="this.classList.remove('active')">
                             i
                             <span class="tooltip">Letters, numbers, spaces, hyphens, and underscores only</span>
                         </span>
                     </label>
-                    <input type="text" id="name" name="name" required placeholder="Challenge Template">
+                    <input type="text" id="name" name="name" required placeholder="Nice Exercise">
                 </div>
                 <div class="form-group">
                     <label for="category">
@@ -53,13 +53,13 @@
                 </div>
                 <div class="form-group">
                     <label for="tag">
-                        Challenge Tag (without prefix) *
+                        Exercise Tag (without prefix) *
                         <span class="info-icon" onclick="this.classList.toggle('active')" onmouseleave="this.classList.remove('active')">
                             i
                             <span class="tooltip">Lowercase letters, numbers, hyphens, and underscores only. Prefix will be added automatically.</span>
                         </span>
                     </label>
-                    <input type="text" id="tag" name="tag" required placeholder="challenge-template" pattern="[a-z0-9_-]+">
+                    <input type="text" id="tag" name="tag" required placeholder="exercise-template" pattern="[a-z0-9_-]+">
                 </div>
                 <div class="form-group checkbox-group">
                     <label>
@@ -73,20 +73,20 @@
                 </div>
             </section>
 
-            <!-- Challenge Description -->
+            <!-- Exercise Description -->
             <section class="form-section">
-                <h2>Challenge Description (OD)</h2>
+                <h2>Exercise Description (OD)</h2>
                 <div class="form-group">
                     <label for="od">
                         Description (Markdown supported) *
                         <span class="info-icon" onclick="this.classList.toggle('active')" onmouseleave="this.classList.remove('active')">
                             i
-                            <span class="tooltip">Enter the challenge description in markdown format. Include prerequisites, outcomes, and solution steps.</span>
+                            <span class="tooltip">Enter the exercise description in markdown format. Include prerequisites, outcomes, and solution steps.</span>
                         </span>
                     </label>
-                    <textarea id="od" name="od" rows="15" required placeholder="# Description of the challenge
+                    <textarea id="od" name="od" rows="15" required placeholder="# Description of the exercise
 
-Add a detailed description of the challenge here.
+Add a detailed description of the exercise here.
 
 **Prerequisites**
 - Prerequisite 1
@@ -110,13 +110,13 @@ Write a step-by-step solution here in markdown format."></textarea>
                 <button type="button" class="btn btn-secondary" onclick="addInstance()">+ Add Service</button>
             </section>
 
-            <!-- Flags -->
+            <!-- Challenges -->
             <section class="form-section" id="flagsSection">
-                <h2>Flags</h2>
+                <h2>Challenges</h2>
                 <div id="flagsContainer">
-                    <!-- Flags will be added here dynamically -->
+                    <!-- Challenges will be added here dynamically -->
                 </div>
-                <button type="button" class="btn btn-secondary" onclick="addFlag()">+ Add Flag</button>
+                <button type="button" class="btn btn-secondary" onclick="addFlag()">+ Add Challenge</button>
             </section>
 
             <!-- Action Buttons -->

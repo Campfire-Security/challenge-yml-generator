@@ -611,3 +611,71 @@ header p {
         width: 100%;
     }
 }
+
+/* Translation Styles */
+.translation-section {
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+.translation-toggle {
+    width: 100%;
+    text-align: left;
+    background: #334155;
+    color: #e2e8f0;
+    border: 1px solid #475569;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.translation-toggle:hover {
+    background: #475569;
+    border-color: #64748b;
+}
+
+.translation-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+}
+
+.translations-list {
+    margin-bottom: 15px;
+}
+
+.translation-entry {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.mc-translation-entry {
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.mc-translation-entry h5 {
+    color: #ff6b35;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+/* Styling for language selects with duplicates */
+select[style*="border-color: rgb(239, 68, 68)"] {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
